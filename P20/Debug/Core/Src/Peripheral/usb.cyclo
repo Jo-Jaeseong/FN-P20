@@ -1,0 +1,2 @@
+../Core/Src/Peripheral/usb.c:35:6:USB_Error_Handler	1
+../Core/Src/Peripheral/usb.c:43:6:SaveToUSBMemory	3

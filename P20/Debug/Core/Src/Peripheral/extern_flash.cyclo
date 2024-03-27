@@ -1,0 +1,5 @@
+../Core/Src/Peripheral/extern_flash.c:41:6:W25Q128_Init	1
+../Core/Src/Peripheral/extern_flash.c:45:6:W25Q128_ChipSelect	2
+../Core/Src/Peripheral/extern_flash.c:53:6:W25Q128_WriteEnable	1
+../Core/Src/Peripheral/extern_flash.c:60:6:W25Q128_WritePage	2
+../Core/Src/Peripheral/extern_flash.c:86:6:W25Q128_ReadData	1

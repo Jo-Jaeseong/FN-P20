@@ -1,0 +1,11 @@
+../Core/Src/Peripheral/lcd.c:43:6:InitLCD	8	static
+../Core/Src/Peripheral/lcd.c:50:6:DisplayPage	16	static
+../Core/Src/Peripheral/lcd.c:55:6:DisplayVacuumSensor	8	static
+../Core/Src/Peripheral/lcd.c:59:6:DisplayPageValue	32	static
+../Core/Src/Peripheral/lcd.c:68:6:LCD_Process	16	static
+../Core/Src/Peripheral/lcd.c:84:6:LCD_Function_Process	16	static
+../Core/Src/Peripheral/lcd.c:92:6:LCD_70	16	static
+../Core/Src/Peripheral/lcd.c:296:6:TestButton	16	static
+../Core/Src/Peripheral/lcd.c:300:6:DisplayPartsTESTIcon	32	static
+../Core/Src/Peripheral/lcd.c:308:6:DisplayIcon	8	static
+../Core/Src/Peripheral/lcd.c:316:6:DisplayTemprature	8	static

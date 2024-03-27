@@ -1,0 +1,7 @@
+../Core/Src/Peripheral/process.c:26:6:loop	5
+../Core/Src/Peripheral/process.c:48:6:DeliSecondProcess	1
+../Core/Src/Peripheral/process.c:58:6:HalfSecondProcess	2
+../Core/Src/Peripheral/process.c:70:6:OneSecondProcess	2
+../Core/Src/Peripheral/process.c:80:6:TenSecondProcess	1
+../Core/Src/Peripheral/process.c:84:6:Init_Device	1
+../Core/Src/Peripheral/process.c:88:6:Inithardware	1

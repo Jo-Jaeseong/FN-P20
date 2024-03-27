@@ -1,0 +1,4 @@
+../Core/Src/Peripheral/flash.c:24:6:Write_Flash	2
+../Core/Src/Peripheral/flash.c:43:6:Read_Flash	1
+../Core/Src/Peripheral/flash.c:52:7:char2float	2
+../Core/Src/Peripheral/flash.c:61:6:float2char	2

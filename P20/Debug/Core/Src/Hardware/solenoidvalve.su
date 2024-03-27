@@ -1,0 +1,3 @@
+../Core/Src/Hardware/solenoidvalve.c:24:6:VacuumValve	16	static
+../Core/Src/Hardware/solenoidvalve.c:29:6:VentValve	16	static
+../Core/Src/Hardware/solenoidvalve.c:34:6:InjectionValve	16	static

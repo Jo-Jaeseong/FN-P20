@@ -1,0 +1,3 @@
+../Core/Src/Sensor/vacuumsensor.c:22:6:InitADC	1
+../Core/Src/Sensor/vacuumsensor.c:26:6:GetValue	2
+../Core/Src/Sensor/vacuumsensor.c:41:10:movingAverageFilter	2

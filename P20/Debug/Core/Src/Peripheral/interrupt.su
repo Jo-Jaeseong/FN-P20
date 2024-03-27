@@ -1,0 +1,2 @@
+../Core/Src/Peripheral/interrupt.c:20:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Core/Src/Peripheral/interrupt.c:42:6:HAL_UART_RxCpltCallback	16	static

@@ -1,0 +1,11 @@
+../Core/Src/Peripheral/lcd.c:43:6:InitLCD	1
+../Core/Src/Peripheral/lcd.c:50:6:DisplayPage	1
+../Core/Src/Peripheral/lcd.c:55:6:DisplayVacuumSensor	1
+../Core/Src/Peripheral/lcd.c:59:6:DisplayPageValue	1
+../Core/Src/Peripheral/lcd.c:68:6:LCD_Process	3
+../Core/Src/Peripheral/lcd.c:84:6:LCD_Function_Process	2
+../Core/Src/Peripheral/lcd.c:92:6:LCD_70	37
+../Core/Src/Peripheral/lcd.c:296:6:TestButton	1
+../Core/Src/Peripheral/lcd.c:300:6:DisplayPartsTESTIcon	1
+../Core/Src/Peripheral/lcd.c:308:6:DisplayIcon	1
+../Core/Src/Peripheral/lcd.c:316:6:DisplayTemprature	1
