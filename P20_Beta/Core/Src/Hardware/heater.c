@@ -8,10 +8,6 @@
 #include "sensor.h"
 #include "hardware.h"
 
-
-extern float Temperature[5];
-
-extern int DoorSettingTemp[3], ChamberSettingTemp[3], ChamberBackSettingTemp[3], VaporizerSettingTemp[3];
 int temperror[5]={};
 
 int TestTempErrorValue=1;
@@ -118,6 +114,7 @@ void VaporizerHeaterControl(int Temp){
 
 void HeaterControl(){
 	/*
+
 	#define State1			0	대기
 	#define State2			1	공정
 	#define State3			2	슬립
@@ -168,137 +165,7 @@ void HeaterControl(){
 	}
 }
 
-/*
- * void HeaterControl(){
-	//DoorHeaterControl
-	if(DoorHeater_flag==State2){			//On(대기)
-		DoorHeaterControl(DoorSettingTemp[State2]);
-	}
-	else if(DoorHeater_flag==State3){	//Process
-		DoorHeaterControl(DoorSettingTemp[State3]);
-	}
-	else if(DoorHeater_flag==Sleepmode){	//절전
-		DoorHeaterControl(DoorSettingTemp[Sleepmode]);
-	}
-	else{									//OFF
-		DoorHeaterControl(DoorSettingTemp[State1]);
-	}
-
-	//ChamberHeaterControl
-	if(ChamberHeater_flag==State2){		//대기
-		ChamberHeaterControl(ChamberSettingTemp[State2]);
-	}
-	else if(ChamberHeater_flag==State3){//동작
-		ChamberHeaterControl(ChamberSettingTemp[State3]);
-	}
-	else if(ChamberHeater_flag==Sleepmode){//동작
-		ChamberHeaterControl(ChamberSettingTemp[Sleepmode]);
-	}
-	else{							//off
-		ChamberHeaterControl(ChamberSettingTemp[State1]);
-	}
-
-
-	//ChamberBackHeaterControl
-	if(ChamberBackHeater_flag==State2){
-		ChamberBackHeaterControl(ChamberBackSettingTemp[State2]);
-	}
-	else if(ChamberBackHeater_flag==State3){
-		ChamberBackHeaterControl(ChamberBackSettingTemp[State3]);
-	}
-	else if(ChamberBackHeater_flag==Sleepmode){
-		ChamberBackHeaterControl(ChamberBackSettingTemp[Sleepmode]);
-	}
-	else{
-		ChamberBackHeaterControl(ChamberBackSettingTemp[State1]);
-	}
-
-
-	//VaporizerHeaterControl
-	if(VaporizerHeater_flag==State2){
-		VaporizerHeaterControl(VaporizerSettingTemp[State2]);
-	}
-	else if(VaporizerHeater_flag==State3){
-		VaporizerHeaterControl(VaporizerSettingTemp[State3]);
-	}
-	else if(VaporizerHeater_flag==Sleepmode){
-		VaporizerHeaterControl(VaporizerSettingTemp[Sleepmode]);
-	}
-	else{
-		VaporizerHeaterControl(VaporizerSettingTemp[State1]);
-	}
-}
- */
-/*
 void HeatingTest(){
-
-	if((DoorSettingTemp[1]+(DoorSettingTemp[1]*Errorrate))<Temperature[0]){
-		temperror[0]=1;
-	}
-	if((DoorSettingTemp[1]-(DoorSettingTemp[1]*Errorrate))>Temperature[0]){
-		temperror[0]=1;
-	}
-
-	if((ChamberSettingTemp[1]+(ChamberSettingTemp[1]*Errorrate))<Temperature[1]){
-		temperror[1]=1;
-	}
-	if((ChamberSettingTemp[1]-(ChamberSettingTemp[1]*Errorrate))>Temperature[1]){
-		temperror[1]=1;
-	}
-
-	if((ChamberBackSettingTemp[1]+(ChamberBackSettingTemp[1]*Errorrate))<Temperature[2]){
-		temperror[2]=1;
-	}
-	if((ChamberBackSettingTemp[1]-(ChamberBackSettingTemp[1]*Errorrate))>Temperature[2]){
-		temperror[2]=1;
-	}
-
-	if((VaporizerSettingTemp[1]+(VaporizerSettingTemp[1]*Errorrate))<Temperature[3]){
-		temperror[3]=1;
-	}
-	if((VaporizerSettingTemp[1]-(VaporizerSettingTemp[1]*Errorrate))>Temperature[3]){
-		temperror[3]=1;
-	}
-}
-*/
-void HeatingTest(){
-	/*
-	if((DoorSettingTemp[0]+Errorrate)<Temperature[0]){
-		temperror[0]=1;
-		temperror[4]=1;
-	}
-	if((DoorSettingTemp[0]-Errorrate)>Temperature[0]){
-		temperror[0]=1;
-		temperror[4]=1;
-	}
-
-	if((ChamberSettingTemp[0]+Errorrate)<Temperature[1]){
-		temperror[1]=1;
-		temperror[4]=1;
-	}
-	if((ChamberSettingTemp[0]-Errorrate)>Temperature[1]){
-		temperror[1]=1;
-		temperror[4]=1;
-	}
-
-	if((ChamberBackSettingTemp[0]+Errorrate)<Temperature[2]){
-		temperror[2]=1;
-		temperror[4]=1;
-	}
-	if((ChamberBackSettingTemp[0]-Errorrate)>Temperature[2]){
-		temperror[2]=1;
-		temperror[4]=1;
-	}
-
-	if((VaporizerSettingTemp[0]+Errorrate)<Temperature[3]){
-		temperror[3]=1;
-		temperror[4]=1;
-	}
-	if((VaporizerSettingTemp[0]-Errorrate)>Temperature[3]){
-		temperror[3]=1;
-		temperror[4]=1;
-	}
-	*/
 	if((DoorSettingTemp[0]-TestTempErrorValue)>Temperature[0]){
 		temperror[0]=1;
 		temperror[4]=1;

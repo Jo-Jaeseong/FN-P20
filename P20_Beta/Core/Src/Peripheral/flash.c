@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "main.h"
 #include "hardware.h"
 #include "sensor.h"
 #include "peripheral.h"
@@ -18,13 +19,12 @@
 
 __attribute__((__section__(".user_data"))) const char userConfig[1024];
 
-/*
 #define USER_FLASH_LAST_PAGE_ADDRESS 0x080FFFFF
 #define FLASH_PAGE_SIZE               0x40000  // 256KB, F4 시리즈에 따라 다를 수 있음
 //#define USER_DATA_FLASH_ADDRESS      (USER_FLASH_LAST_PAGE_ADDRESS + 1 - FLASH_PAGE_SIZE)
 #define USER_DATA_FLASH_ADDRESS      0x08040000
-*/
 
+char userdata[1024];
 //extern struct data_format	CycleData[3][7][21];
 extern struct Process_data_format	CycleData[7][21];
 extern int CycleName;
@@ -270,24 +270,24 @@ void Write_Flash(){
 	j=CYCLEDATA1;
 	for(int i2=1;i2<7;i2++){
 		for(int i3=1;i3<21;i3++){
-			ucData[j]=userConfig[j];
-			ucData[j+1]=userConfig[j+1];
+			ucData[j]=userdata[j];
+			ucData[j+1]=userdata[j+1];
 			j+=2;
 		}
 	}
 	j=CYCLEDATA2;
 	for(int i2=1;i2<7;i2++){
 		for(int i3=1;i3<21;i3++){
-			ucData[j]=userConfig[j];
-			ucData[j+1]=userConfig[j+1];
+			ucData[j]=userdata[j];
+			ucData[j+1]=userdata[j+1];
 			j+=2;
 		}
 	}
 	j=CYCLEDATA3;
 	for(int i2=1;i2<7;i2++){
 		for(int i3=1;i3<21;i3++){
-			ucData[j]=userConfig[j];
-			ucData[j+1]=userConfig[j+1];
+			ucData[j]=userdata[j];
+			ucData[j+1]=userdata[j+1];
 			j+=2;
 		}
 	}
@@ -325,21 +325,26 @@ void Write_Flash(){
 }
 
 void Read_Flash(){
-	DoorSettingTemp[0]=userConfig[DOORSETTINGTEMP_DATA];
-	DoorSettingTemp[1]=userConfig[DOORSETTINGTEMP_DATA+1];
-	DoorSettingTemp[2]=userConfig[DOORSETTINGTEMP_DATA+2];
 
-	ChamberSettingTemp[0]=userConfig[CHAMBERSETTINGTEMP_DATA];
-	ChamberSettingTemp[1]=userConfig[CHAMBERSETTINGTEMP_DATA+1];
-	ChamberSettingTemp[2]=userConfig[CHAMBERSETTINGTEMP_DATA+2];
+   for (int i = 0; i < 1024; i++) {
+		// Flash 메모리의 주소에서 직접 데이터를 읽어와 ReadTest 배열에 저장합니다.
+	   userdata[i] = Flash_Read_Int(USER_DATA_FLASH_ADDRESS + i);
+	}
+	DoorSettingTemp[0]=userdata[DOORSETTINGTEMP_DATA];
+	DoorSettingTemp[1]=userdata[DOORSETTINGTEMP_DATA+1];
+	DoorSettingTemp[2]=userdata[DOORSETTINGTEMP_DATA+2];
 
-	ChamberBackSettingTemp[0]=userConfig[CHAMBERBACKSETTINGTEMP_DATA];
-	ChamberBackSettingTemp[1]=userConfig[CHAMBERBACKSETTINGTEMP_DATA+1];
-	ChamberBackSettingTemp[2]=userConfig[CHAMBERBACKSETTINGTEMP_DATA+2];
+	ChamberSettingTemp[0]=userdata[CHAMBERSETTINGTEMP_DATA];
+	ChamberSettingTemp[1]=userdata[CHAMBERSETTINGTEMP_DATA+1];
+	ChamberSettingTemp[2]=userdata[CHAMBERSETTINGTEMP_DATA+2];
 
-	VaporizerSettingTemp[0]=userConfig[VAPORIZERSETTINGTEMP_DATA];
-	VaporizerSettingTemp[1]=userConfig[VAPORIZERSETTINGTEMP_DATA+1];
-	VaporizerSettingTemp[2]=userConfig[VAPORIZERSETTINGTEMP_DATA+2];
+	ChamberBackSettingTemp[0]=userdata[CHAMBERBACKSETTINGTEMP_DATA];
+	ChamberBackSettingTemp[1]=userdata[CHAMBERBACKSETTINGTEMP_DATA+1];
+	ChamberBackSettingTemp[2]=userdata[CHAMBERBACKSETTINGTEMP_DATA+2];
+
+	VaporizerSettingTemp[0]=userdata[VAPORIZERSETTINGTEMP_DATA];
+	VaporizerSettingTemp[1]=userdata[VAPORIZERSETTINGTEMP_DATA+1];
+	VaporizerSettingTemp[2]=userdata[VAPORIZERSETTINGTEMP_DATA+2];
 
 	if(DoorSettingTemp[0]==0){
 		DoorSettingTemp[0]=55;
@@ -366,9 +371,9 @@ void Read_Flash(){
 		VaporizerSettingTemp[1]=130;
 	}
 
-	PreesureCondition[0]=userConfig[PRESSURECONDITION_DATA];
-	PreesureCondition[1]=userConfig[PRESSURECONDITION_DATA+1];
-	PreesureCondition[2]=userConfig[PRESSURECONDITION_DATA+2];
+	PreesureCondition[0]=userdata[PRESSURECONDITION_DATA];
+	PreesureCondition[1]=userdata[PRESSURECONDITION_DATA+1];
+	PreesureCondition[2]=userdata[PRESSURECONDITION_DATA+2];
 
 	if(PreesureCondition[0]==0){
 			PreesureCondition[0]=50;
@@ -381,62 +386,64 @@ void Read_Flash(){
 	}
 
 
-	PlasmaTime[0]=userConfig[PLASMATIME_DATA];
+	PlasmaTime[0]=userdata[PLASMATIME_DATA];
 	if(PlasmaTime[0]==0){
 		PlasmaTime[0]=1;
 	}
-	PlasmaTime[1]=userConfig[PLASMATIME_DATA+1];
+	PlasmaTime[1]=userdata[PLASMATIME_DATA+1];
 
-	CalibrationTemp[0]=userConfig[CALIBRATIONTEMP_DATA];
-	CalibrationTemp[1]=userConfig[CALIBRATIONTEMP_DATA+1];
-	CalibrationTemp[2]=userConfig[CALIBRATIONTEMP_DATA+2];
-	CalibrationTemp[3]=userConfig[CALIBRATIONTEMP_DATA+3];
+	CalibrationTemp[0]=userdata[CALIBRATIONTEMP_DATA];
+	CalibrationTemp[1]=userdata[CALIBRATIONTEMP_DATA+1];
+	CalibrationTemp[2]=userdata[CALIBRATIONTEMP_DATA+2];
+	CalibrationTemp[3]=userdata[CALIBRATIONTEMP_DATA+3];
 
 	for(int i=0;i<4;i++){
 		if(CalibrationTemp[i]==0){
 			CalibrationTemp[i]=10;
 		}
 	}
-	//CalibrationVacuum=userConfig[CALIBRATIONVACUUM_DATA];
-	CalibrationVacuum = char2float((unsigned char *)(userConfig + CALIBRATIONVACUUM_DATA));
+	//CalibrationVacuum=userdata[CALIBRATIONVACUUM_DATA];
+	CalibrationVacuum = char2float((unsigned char *)(userdata + CALIBRATIONVACUUM_DATA));
 	if(CalibrationVacuum==0){
 		CalibrationVacuum=100;
 	}
 
-	TestVacuumValue=userConfig[TESTVACUUMVALUE_DATA];
+	TestVacuumValue=userdata[TESTVACUUMVALUE_DATA];
 	if(TestVacuumValue==0){
 		TestVacuumValue=10;
 	}
-	TestLeakValue=userConfig[TESTLEAKVALUE_DATA];
+	TestLeakValue=userdata[TESTLEAKVALUE_DATA];
 	if(TestLeakValue==0){
 		TestLeakValue=2;
 	}
-	TestTempErrorValue=userConfig[TESTTEMPERRORVALUE_DATA];
+	TestTempErrorValue=userdata[TESTTEMPERRORVALUE_DATA];
 	if(TestTempErrorValue==0){
 		TestTempErrorValue=2;
 	}
 
+
+
 	for(int i=0;i<3;i++){
-		flash_sterilant_production_year[i]=userConfig[PRODUCTION_YEAR+8*i];
-		flash_sterilant_production_month[i]=userConfig[PRODUCTION_MONTH+8*i];
-		flash_sterilant_production_day[i]=userConfig[PRODUCTION_DAY+8*i];
-		flash_sterilant_production_number[i]=userConfig[PRODUCTION_NUMBER+8*i];
+		flash_sterilant_production_year[i]=userdata[PRODUCTION_YEAR+8*i];
+		flash_sterilant_production_month[i]=userdata[PRODUCTION_MONTH+8*i];
+		flash_sterilant_production_day[i]=userdata[PRODUCTION_DAY+8*i];
+		flash_sterilant_production_number[i]=userdata[PRODUCTION_NUMBER+8*i];
 
-		flash_sterilant_open_year[i]=userConfig[OPEN_YEAR+8*i];
-		flash_sterilant_open_month[i]=userConfig[OPEN_MONTH+8*i];
-		flash_sterilant_open_day[i]=userConfig[OPEN_DAY+8*i];
+		flash_sterilant_open_year[i]=userdata[OPEN_YEAR+8*i];
+		flash_sterilant_open_month[i]=userdata[OPEN_MONTH+8*i];
+		flash_sterilant_open_day[i]=userdata[OPEN_DAY+8*i];
 
-		flash_sterilant_volume[i]=userConfig[VOLUME+8*i];
+		flash_sterilant_volume[i]=userdata[VOLUME+8*i];
 	}
 
 	for(int i=0;i<10;i++){
-		flash_MODEL_NAME[i]=userConfig[MODEL_NAME+i];
-		flash_HARDWARE_VERSION[i]=userConfig[HARDWARE_VERSION+i];
-		flash_SOFTWARE_VERSION[i]=userConfig[SOFTWARE_VERSION+i];
-		flash_LANGUAGE[i]=userConfig[FLASHLANGUAGE+i];
-		flash_SERIAL_NUMBER[i]=userConfig[SERIAL_NUMBER+i];
-		flash_DEPARTMENT_NAME[i]=userConfig[DEPARTMENT_NAME+i];
-		flash_FACILITY_NAME[i]=userConfig[FACILITY_NAME+i];
+		flash_MODEL_NAME[i]=userdata[MODEL_NAME+i];
+		flash_HARDWARE_VERSION[i]=userdata[HARDWARE_VERSION+i];
+		flash_SOFTWARE_VERSION[i]=userdata[SOFTWARE_VERSION+i];
+		flash_LANGUAGE[i]=userdata[FLASHLANGUAGE+i];
+		flash_SERIAL_NUMBER[i]=userdata[SERIAL_NUMBER+i];
+		flash_DEPARTMENT_NAME[i]=userdata[DEPARTMENT_NAME+i];
+		flash_FACILITY_NAME[i]=userdata[FACILITY_NAME+i];
 	}
 
 
@@ -462,46 +469,46 @@ void Read_Flash(){
 		sprintf(flash_LANGUAGE,"English   ");
 	}
 
-	CarbonFilterMax=(userConfig[CARBONFILTERMAX]*100)+(userConfig[CARBONFILTERMAX+1]);
+	CarbonFilterMax=(userdata[CARBONFILTERMAX]*100)+(userdata[CARBONFILTERMAX+1]);
 	if(CarbonFilterMax==0){
 		CarbonFilterMax=4000;
 	}
-	HEPAFilterMax=(userConfig[HEPAFILTERMAX]*100)+(userConfig[HEPAFILTERMAX+1]);
+	HEPAFilterMax=(userdata[HEPAFILTERMAX]*100)+(userdata[HEPAFILTERMAX+1]);
 	if(HEPAFilterMax==0){
 		HEPAFilterMax=4000;
 	}
-	PlasmaAssyMax=(userConfig[PLASMAASSYMAX]*100)+(userConfig[PLASMAASSYMAX+1]);
+	PlasmaAssyMax=(userdata[PLASMAASSYMAX]*100)+(userdata[PLASMAASSYMAX+1]);
 	if(PlasmaAssyMax==0){
 		PlasmaAssyMax=4000;
 	}
 
-	CarbonFilter=(userConfig[CARBONFILTER]*100)+(userConfig[CARBONFILTER+1]);
+	CarbonFilter=(userdata[CARBONFILTER]*100)+(userdata[CARBONFILTER+1]);
 	if(CarbonFilter==0){
 		CarbonFilter=4000;
 	}
-	HEPAFilter=(userConfig[HEPAFILTER]*100)+(userConfig[HEPAFILTER+1]);
+	HEPAFilter=(userdata[HEPAFILTER]*100)+(userdata[HEPAFILTER+1]);
 	if(HEPAFilter==0){
 		HEPAFilter=4000;
 	}
-	PlasmaAssy=(userConfig[PLASMAASSY]*100)+(userConfig[PLASMAASSY+1]);
+	PlasmaAssy=(userdata[PLASMAASSY]*100)+(userdata[PLASMAASSY+1]);
 	if(PlasmaAssy==0){
 		PlasmaAssy=4000;
 	}
 
 
-	totalCount=(userConfig[TOTALCOUNT]*100)+(userConfig[TOTALCOUNT+1]);
-	//dailyCount=(userConfig[DAILYCOUNT]*100)+(userConfig[DAILYCOUNT+1]);
-	dailyCount=userConfig[DAILYCOUNT];
+	totalCount=(userdata[TOTALCOUNT]*100)+(userdata[TOTALCOUNT+1]);
+	//dailyCount=(userdata[DAILYCOUNT]*100)+(userdata[DAILYCOUNT+1]);
+	dailyCount=userdata[DAILYCOUNT];
 
-	flashuserCount=userConfig[FLASHUSERCOUNT];
+	flashuserCount=userdata[FLASHUSERCOUNT];
 	if(flashuserCount<=0){
 		flashuserCount=0;
 	}
 
 	for(int j=0;j<5;j++){
 		for(int i=0;i<10;i++){
-			flash_ID[j][i]=userConfig[FLASHID+i+10*j];
-			flash_PW[j][i]=userConfig[FLASHPW+i+10*j];
+			flash_ID[j][i]=userdata[FLASHID+i+10*j];
+			flash_PW[j][i]=userdata[FLASHPW+i+10*j];
 		}
 	}
 
@@ -520,8 +527,8 @@ void Read_Flash(){
 	}
 	for(int i2=1;i2<7;i2++){
 		for(int i3=1;i3<21;i3++){
-			CycleData[i2][i3].PartsSetting=userConfig[j];
-			CycleData[i2][i3].Time=(userConfig[j+1]);
+			CycleData[i2][i3].PartsSetting=userdata[j];
+			CycleData[i2][i3].Time=(userdata[j+1]);
 			j+=2;
 		}
 	}
@@ -1219,10 +1226,35 @@ void shift_flash_data() {
         flash_sterilant_volume[i] = flash_sterilant_volume[i + 1];
     }
 }
+HAL_StatusTypeDef Flash_Write_Int(uint32_t address, uint32_t value)
+{
+    HAL_StatusTypeDef status;
+    // 플래시 잠금 해제
+    HAL_FLASH_Unlock();
 
+    // 필요하다면 페이지 지우기
+    FLASH_EraseInitTypeDef EraseInitStruct;
+    uint32_t PAGEError = 0;
+    EraseInitStruct.TypeErase = FLASH_TYPEERASE_SECTORS;
+    EraseInitStruct.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+    EraseInitStruct.Sector = FLASH_SECTOR_11; // 마지막 섹터 번호, MCU에 따라 다름
+    EraseInitStruct.NbSectors = 1;
+    status = HAL_FLASHEx_Erase(&EraseInitStruct, &PAGEError);
+    if (status != HAL_OK) return status;
 
+    // 데이터 쓰기
+    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, value);
 
+    // 플래시 잠금
+    HAL_FLASH_Lock();
 
+    return status;
+}
+
+uint32_t Flash_Read_Int(uint32_t address)
+{
+    return *(uint32_t*)address;
+}
 
 
 union fc {

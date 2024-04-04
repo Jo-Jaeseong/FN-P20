@@ -134,10 +134,10 @@ extern float TemperatureData[300];
 
 extern unsigned int DataCounter;
 
-void InitLCD(void){
+void InitLCD(void){	//LCD 초기화
 	HAL_Delay(1000);
-	DisplayFirstPage();
-	//DisplayPage(70);
+	//DisplayFirstPage();
+	DisplayPage(60);
 	//DisplayPage(LCD_INFO_HISTORY_PAGE);
 	SetRTCFromLCD();
     //Start_Page
@@ -568,6 +568,12 @@ void LCD_Process(){
 			iValue |= LCD_rx_data[8];
 			LCD_44(LCD_rx_data[5], iValue);
 			break;
+        case 0x60 :    // 60page board test
+			iValue = LCD_rx_data[7];
+			iValue <<= 8;
+			iValue |= LCD_rx_data[8];
+			LCD_60(LCD_rx_data[5], iValue);
+			break;
     }
     HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 }
@@ -578,7 +584,7 @@ void LCD_Function_Process(int index, int value){
             DoActionButton(value);
             break;
         case 2:
-        	TestButton(value);
+
             break;
         case 3:
         	ProcessSettingButton(value);
@@ -599,7 +605,7 @@ void LCD_02(int index, int value){	//
 		case 0x00 :
 			switch(value) {
 				case 0x01 : // Sign in
-					if(loginUser()){
+					if(loginProcess()){
 						DisplayPage(LCD_HOME_PAGE);
 						Display05page();
 					}
@@ -1679,12 +1685,6 @@ void LCD_34(int index, int value){	//input Value
 		        	}
 		        	Write_Flash();
 		        	DisplayProcessSettingValues();
-		        	/*
-		        	DoorHeater_flag=2;
-		        	ChamberHeater_flag=2;
-		        	ChamberBackHeater_flag=2;
-		        	VaporizerHeater_flag=2;
-		        	*/
 		        	DisplayPage(current_page);
 					break;
 			}
@@ -1738,12 +1738,6 @@ void LCD_35(int index, int value){	//input Value
 		        	}
 		        	Write_Flash();
 		        	DisplayProcessSettingValues();
-		        	/*
-		        	DoorHeater_flag=2;
-		        	ChamberHeater_flag=2;
-		        	ChamberBackHeater_flag=2;
-		        	VaporizerHeater_flag=2;
-		        	*/
 		        	DisplayPage(current_page);
 					break;
 			}
@@ -1917,6 +1911,195 @@ void LCD_44(int index, int value){	//input Value
 	}
 
 	Display44page();
+}
+
+void LCD_60(int index, int value){	//input Value
+	switch(index) {
+		case 0x00 :
+			switch(value) {
+				//AC Test
+				case 0x01 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT11_GPIO_Port, GPIO_OUT11_Pin)){
+						AC1(0);
+		        		DisplayIcon(0x6A,0x10,0);
+					}
+					else{
+						AC1(1);
+		        		DisplayIcon(0x6A,0x10,1);
+					}
+					break;
+				case 0x02 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT12_GPIO_Port, GPIO_OUT12_Pin)){
+						AC2(0);
+		        		DisplayIcon(0x6A,0x20,0);
+					}
+					else{
+						AC2(1);
+		        		DisplayIcon(0x6A,0x20,1);
+					}
+					break;
+				case 0x03 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT13_GPIO_Port, GPIO_OUT13_Pin)){
+						AC3(0);
+		        		DisplayIcon(0x6A,0x30,0);
+					}
+					else{
+						AC3(1);
+		        		DisplayIcon(0x6A,0x30,1);
+					}
+					break;
+				case 0x04 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT14_GPIO_Port, GPIO_OUT14_Pin)){
+						AC4(0);
+		        		DisplayIcon(0x6A,0x40,0);
+					}
+					else{
+						AC4(1);
+		        		DisplayIcon(0x6A,0x40,1);
+					}
+					break;
+				case 0x05 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT15_GPIO_Port, GPIO_OUT15_Pin)){
+						AC5(0);
+		        		DisplayIcon(0x6A,0x50,0);
+					}
+					else{
+						AC5(1);
+		        		DisplayIcon(0x6A,0x50,1);
+					}
+					break;
+				case 0x06 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT16_GPIO_Port, GPIO_OUT16_Pin)){
+						//AC6(0);
+						VacuumPump(0);
+		        		DisplayIcon(0x6A,0x60,0);
+					}
+					else{
+						//AC6(1);
+						VacuumPump(1);
+		        		DisplayIcon(0x6A,0x60,1);
+					}
+					break;
+				case 0x07 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT17_GPIO_Port, GPIO_OUT17_Pin)){
+						AC7(0);
+		        		DisplayIcon(0x6A,0x70,0);
+					}
+					else{
+						AC7(1);
+		        		DisplayIcon(0x6A,0x70,1);
+					}
+					break;
+				case 0x08 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT18_GPIO_Port, GPIO_OUT18_Pin)){
+						AC8(0);
+		        		DisplayIcon(0x6A,0x80,0);
+					}
+					else{
+						AC8(1);
+		        		DisplayIcon(0x6A,0x80,1);
+					}
+					break;
+
+				//DC Test
+				case 0x09 :
+					if(HAL_GPIO_ReadPin(GPIO_OUT1_GPIO_Port, GPIO_OUT1_Pin)){
+						DC1(0);
+		        		DisplayIcon(0x6B,0x10,0);
+					}
+					else{
+						DC1(1);
+		        		DisplayIcon(0x6B,0x10,1);
+					}
+					break;
+				case 0x0A :
+					if(HAL_GPIO_ReadPin(GPIO_OUT2_GPIO_Port, GPIO_OUT2_Pin)){
+						DC2(0);
+		        		DisplayIcon(0x6B,0x20,0);
+					}
+					else{
+						DC2(1);
+		        		DisplayIcon(0x6B,0x20,1);
+					}
+					break;
+				case 0x0B :
+					if(HAL_GPIO_ReadPin(GPIO_OUT3_GPIO_Port, GPIO_OUT3_Pin)){
+						DC3(0);
+		        		DisplayIcon(0x6B,0x30,0);
+					}
+					else{
+						DC3(1);
+		        		DisplayIcon(0x6B,0x30,1);
+					}
+					break;
+				case 0x0C :
+					if(HAL_GPIO_ReadPin(GPIO_OUT4_GPIO_Port, GPIO_OUT4_Pin)){
+						DC4(0);
+		        		DisplayIcon(0x6B,0x40,0);
+					}
+					else{
+						DC4(1);
+		        		DisplayIcon(0x6B,0x40,1);
+					}
+					break;
+				case 0x0D :
+					if(HAL_GPIO_ReadPin(GPIO_OUT5_GPIO_Port, GPIO_OUT5_Pin)){
+						DC5(0);
+		        		DisplayIcon(0x6B,0x50,0);
+					}
+					else{
+						DC5(1);
+		        		DisplayIcon(0x6B,0x50,1);
+					}
+					break;
+				case 0x0E :
+					if(HAL_GPIO_ReadPin(GPIO_OUT6_GPIO_Port, GPIO_OUT6_Pin)){
+						DC6(0);
+		        		DisplayIcon(0x6B,0x60,0);
+					}
+					else{
+						DC6(1);
+		        		DisplayIcon(0x6B,0x60,1);
+					}
+					break;
+				case 0x0F :
+					if(HAL_GPIO_ReadPin(GPIO_OUT7_GPIO_Port, GPIO_OUT7_Pin)){
+						DC7(0);
+		        		DisplayIcon(0x6B,0x70,0);
+					}
+					else{
+						DC7(1);
+		        		DisplayIcon(0x6B,0x70,1);
+					}
+					break;
+				case 0x10 :
+					if(HAL_GPIO_ReadPin(GPIO_OUT8_GPIO_Port, GPIO_OUT8_Pin)){
+						DC8(0);
+		        		DisplayIcon(0x6B,0x80,0);
+					}
+					else{
+						DC8(1);
+		        		DisplayIcon(0x6B,0x80,1);
+					}
+					break;
+				case 0x11 :
+					if(HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin)){
+						//페리펌프
+		        		DisplayIcon(0x6B,0x90,0);
+					}
+					else{
+						//페리펌프
+		        		DisplayIcon(0x6B,0x90,1);
+					}
+					break;
+			}
+			break;
+		case 0x01 : // Cycle 선택
+			break;
+
+	}
+
+	//Display60page();
 }
 
 
@@ -2093,7 +2276,10 @@ void DoActionButton(int key){	//00xx
         	VentValve_flag=0;
         	InjectionValve_flag=0;
         	Fan_flag=0;
-        	DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
+        	//DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
+        	//여기 테스트중
+        	DisplayPage(60);
+
         	break;
 
         case 0x99:
@@ -2131,182 +2317,6 @@ void DoActionButton(int key){	//00xx
 }
 
 
-void TestButton(int key){	//02XX
-    switch(key) {
-    	case 0:
-
-            break;
-        case 1:
-        	if(VacuumPump_flag==1){
-        		VacuumPump(0);
-        		VacuumPump_flag=0;
-        		DisplayPartsTESTIcon(1,0);
-        	}
-        	else{
-        		VacuumPump(1);
-        		VacuumPump_flag=1;
-        		DisplayPartsTESTIcon(1,1);
-        	}
-            break;
-        case 2:
-        	if(Plasma_flag==1){
-        		Plasma(0);
-        		Plasma_flag=0;
-        	}
-        	else{
-        		Plasma(1);
-        		Plasma_flag=1;
-        	}
-            break;
-        case 3:
-        	if(DoorHeater_flag==1){
-        		DoorHeater(0);
-        		DoorHeater_flag=0;
-        	}
-        	else{
-        		DoorHeater(1);
-        		DoorHeater_flag=1;
-        	}
-            break;
-        case 4:
-        	if(ChamberHeater_flag==1){
-        		ChamberHeater(0);
-        		ChamberHeater_flag=0;
-        	}
-        	else{
-        		ChamberHeater(1);
-        		ChamberHeater_flag=1;
-        	}
-            break;
-        case 5:
-        	if(ChamberBackHeater_flag==1){
-        		ChamberBackHeater(0);
-        		ChamberBackHeater_flag=0;
-        	}
-        	else{
-        		ChamberBackHeater(1);
-        		ChamberBackHeater_flag=1;
-        	}
-            break;
-        case 6:
-        	if(VaporizerHeater_flag==1){
-        		VaporizerHeater(0);
-        		VaporizerHeater_flag=0;
-        	}
-        	else{
-        		VaporizerHeater(1);
-        		VaporizerHeater_flag=1;
-        	}
-            break;
-        case 7:
-        	if(CirculationHeater_flag==1){
-        		CirculationHeater(0);
-        		CirculationHeater_flag=0;
-        	}
-        	else{
-        		CirculationHeater(1);
-        		CirculationHeater_flag=1;
-        	}
-            break;
-
-
-        case 8:
-        	if(DoorLatch_flag==1){
-        		DoorLatch_flag=0;
-        	}
-        	else if(DoorLatch_flag==0){
-        		DoorLatch_flag=1;
-        	}
-            break;
-        case 9:
-        	if(VacuumValve_flag==1){
-        		VacuumValve(0);
-        		VacuumValve_flag=0;
-        		DisplayPartsTESTIcon(2,0);
-        	}
-        	else{
-        		VacuumValve(1);
-        		VacuumValve_flag=1;
-        		DisplayPartsTESTIcon(2,1);
-        	}
-            break;
-        case 0x0A:
-        	if(CirculationValve_flag==1){
-        		CirculationValve(0);
-        		CirculationValve_flag=0;
-        	}
-        	else{
-        		CirculationValve(1);
-        		CirculationValve_flag=1;
-        	}
-            break;
-        case 0x0B:
-        	if(InhalationValve_flag==1){
-        		InhalationValve(0);
-        		InhalationValve_flag=0;
-        	}
-        	else{
-        		InhalationValve(1);
-        		InhalationValve_flag=1;
-        	}
-            break;
-        case 0x0C:
-        	if(VentValve_flag==1){
-        		VentValve(0);
-        		VentValve_flag=0;
-        		DisplayPartsTESTIcon(3,0);
-        	}
-        	else{
-        		VentValve(1);
-        		VentValve_flag=1;
-        		DisplayPartsTESTIcon(3,1);
-        	}
-            break;
-        case 0x0D:
-        	if(InjectionValve_flag==1){
-        		InjectionValve(0);
-        		InjectionValve_flag=0;
-        		DisplayPartsTESTIcon(4,0);
-        	}
-        	else{
-        		InjectionValve(1);
-        		InjectionValve_flag=1;
-        		DisplayPartsTESTIcon(4,1);
-        	}
-            break;
-        case 0x0E:
-        	if(Fan_flag==1){
-        		Fan(0);
-        		PeristalticSpeed();
-        		TurnOffPeristalticPump();
-        		Fan_flag=0;
-        	}
-        	else{
-        		Fan(1);
-        		PeristalticSpeed();
-        		TurnOnPeristalticPump();
-        		Fan_flag=1;
-        	}
-            break;
-
-        case 0x0F:
-        	printmain();
-            break;
-
-        case 0x10:
-        	InitRFID();
-        	ret1=ReadRFID();
-        	DisplayRFIDNumber();
-        	if(ret1==1){
-        		rfid_callback();
-        		Write_Flash();
-        	}
-        	DisplayPage(current_page);
-			break;
-
-    }
-    //HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
-}
 
 //Process Setting Page
 void ProcessSettingButton(int key){	//03XX
@@ -2333,12 +2343,6 @@ void ProcessSettingButton(int key){	//03XX
         	}
         	Write_Flash();
         	DisplayProcessSettingValues();
-        	/*
-        	DoorHeater_flag=2;
-        	ChamberHeater_flag=2;
-        	ChamberBackHeater_flag=2;
-        	VaporizerHeater_flag=2;
-        	*/
         	DisplayPage(current_page);
 			break;
         case 0x60:	//TEST START
@@ -3389,6 +3393,14 @@ void GetTime(void){
 	unsigned char week;
 	ReadRTC( &today_date.year, &today_date.month, &today_date.day, &week,
 			&today_date.hour, &today_date.minute, &today_date.second);
+}
+
+void DisplayTemprature(){
+	DisplayPageValue(0x60,0x01,Temperature[0]*10);
+	DisplayPageValue(0x60,0x05,Temperature[1]*10);
+	DisplayPageValue(0x60,0x09,Temperature[2]*10);
+	DisplayPageValue(0x60,0x0D,Temperature[3]*10);
+
 }
 
 void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsigned char *week, unsigned char *hour, unsigned char *minute, unsigned char *second){

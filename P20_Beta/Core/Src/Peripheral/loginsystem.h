@@ -10,7 +10,7 @@
 
 //아이디 생성
 int createUser();
-int loginUser();
+int loginProcess();
 
 int changePWUser();
 int changePWloginUser();

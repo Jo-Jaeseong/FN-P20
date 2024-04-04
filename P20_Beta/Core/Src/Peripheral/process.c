@@ -6,6 +6,7 @@
  */
 
 #include "main.h"
+#include "stdbool.h"
 
 #include "hardware.h"
 #include "sensor.h"
@@ -13,6 +14,9 @@
 
 #define NORMAL		1
 #define FACTORYTEST	0
+
+
+bool TESTPIN;
 
 extern unsigned char flash_sterilant_volume[3];
 extern struct RFID_format RFIDData;
@@ -115,7 +119,6 @@ extern unsigned char Timer_DeliSecond_Flag, Timer_Half_1s_Flag, Timer_1s_Flag;
 extern unsigned char UART_Receive_Flag, EndTimer_Flag;
 
 void loop(){
-
 	if(UART_Receive_Flag) {
 		UART_Receive_Flag = 0;
 		LCD_Process();
@@ -156,6 +159,7 @@ void HalfSecondProcess(void){
 	else{
 		tempcnt++;
 	}
+	DisplayTemprature();
 
 	DisplayPartsTESTIcon(5,DoorHandleCheck());
 	DisplayPartsTESTIcon(6,DoorLatchCheck());
@@ -195,6 +199,9 @@ void HalfSecondProcess(void){
 	if(Running_Flag==1){
 
 	}
+	HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
+	TESTPIN=HAL_GPIO_ReadPin(LED_GR_GPIO_Port, LED_GR_Pin);
+
 }
 
 
@@ -334,10 +341,12 @@ void Start(){
 
 	Select_NORMAL_MODE=1;
 	Running_Flag=1;
+
 	DoorHeater_flag=1;
 	ChamberHeater_flag=1;
 	ChamberBackHeater_flag=1;
 	VaporizerHeater_flag=1;
+
 	CurrentProcess=1;
 	CurrentStep=1;
 	EndTimer_Flag=1;
@@ -386,10 +395,12 @@ void Stop(){
 void FactoryTestStart(){
 	Select_NORMAL_MODE=0;
 	Running_Flag=1;
+
 	DoorHeater_flag=1;
 	ChamberHeater_flag=1;
 	ChamberBackHeater_flag=1;
 	VaporizerHeater_flag=1;
+
 	CurrentProcess=1;
 	CurrentStep=1;
 	EndTimer_Flag=1;
@@ -779,9 +790,10 @@ void NormalMode(){
 			CyclePrint();
 		}
 
-		Write_Setting_Data_Flash();
+		//Write_Setting_Data_Flash();
 		HAL_Delay(100);
-		Write_Data_Flash();
+		//Write_Data_Flash();
+
 
 		Write_Flash();
 

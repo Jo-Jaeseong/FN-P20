@@ -85,7 +85,7 @@ int createUser() {
 }
 
 //로그인
-int loginUser() {
+int loginProcess() {
 	ReadInputLoginIDPWFromLCD();
     if((inputloginID[0]==0)||(inputloginPW[0]==0)){
         printf("아이디와 패스워드를 입력하시오.\n");
@@ -167,13 +167,7 @@ void ReadInputCreateIDPWFromLCD(){
 
     for(int i=0;i<10;i++){
     	if(LCD_rx_data[i+7]==0xFF){
-    		inputCreateID[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x53){
-    		inputCreateID[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x54){
-    		inputCreateID[i]=0;
+    		break;
     	}
     	else{
     		inputCreateID[i]=LCD_rx_data[i+7];
@@ -186,13 +180,7 @@ void ReadInputCreateIDPWFromLCD(){
 
     for(int i=0;i<10;i++){
     	if(LCD_rx_data[i+7]==0xFF){
-    		inputCreatePW[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x53){
-    		inputCreatePW[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x54){
-    		inputCreatePW[i]=0;
+    		break;
     	}
     	else{
     		inputCreatePW[i]=LCD_rx_data[i+7];
@@ -205,13 +193,7 @@ void ReadInputCreateIDPWFromLCD(){
 
     for(int i=0;i<10;i++){
     	if(LCD_rx_data[i+7]==0xFF){
-    		inputCreatePW2[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x53){
-    		inputCreatePW2[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x54){
-    		inputCreatePW2[i]=0;
+    		break;
     	}
     	else{
     		inputCreatePW2[i]=LCD_rx_data[i+7];
@@ -274,13 +256,7 @@ void ReadInputManagmentIDPWFromLCD(){
 
 	for(int i=0;i<10;i++){
     	if(LCD_rx_data[i+7]==0xFF){
-    		inputManagementPW[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x53){
-    		inputManagementPW[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x54){
-    		inputManagementPW[i]=0;
+    		break;
     	}
     	else{
     		inputManagementPW[i]=LCD_rx_data[i+7];
@@ -293,13 +269,7 @@ void ReadInputManagmentIDPWFromLCD(){
 
 	for(int i=0;i<10;i++){
     	if(LCD_rx_data[i+7]==0xFF){
-    		inputManagementPW2[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x53){
-    		inputManagementPW2[i]=0;
-    	}
-    	else if(LCD_rx_data[i+7]==0x54){
-    		inputManagementPW2[i]=0;
+    		break;
     	}
     	else{
     		inputManagementPW2[i]=LCD_rx_data[i+7];

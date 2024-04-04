@@ -114,9 +114,10 @@ void LCD_37(int index, int value);
 void LCD_38(int index, int value);
 void LCD_39(int index, int value);
 void LCD_44(int index, int value);
+void LCD_60(int index, int value);
 
 void DoActionButton(int key);
-void TestButton(int key);
+
 void ProcessSettingButton(int key);
 
 void DisplayProcessIcon(int index, int value);
@@ -198,10 +199,13 @@ void SetRTCFromLCD();
 
 void ReadInforDataFromLCD();
 
+void DisplayTemprature();
+
 
 unsigned char hex2bcd (unsigned char x);
 unsigned char bcd2bin (unsigned char x);
 
+//Graph
 void DisplayDot(int vp1,int vp2,int x, int y);
 void DisplayInitTempGraph();
 void DisplayInitVacuumGraph();

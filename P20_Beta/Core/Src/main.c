@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
 #include "fatfs.h"
 #include "usb_host.h"
 
@@ -64,20 +63,6 @@ UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart6;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for myTask02 */
-osThreadId_t myTask02Handle;
-const osThreadAttr_t myTask02_attributes = {
-  .name = "myTask02",
-  .stack_size = 2000 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -98,10 +83,9 @@ static void MX_ADC2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC3_Init(void);
 static void MX_CRC_Init(void);
-void StartDefaultTask(void *argument);
-void StartTask02(void *argument);
-
 static void MX_NVIC_Init(void);
+void MX_USB_HOST_Process(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -193,6 +177,7 @@ int main(void)
   MX_ADC3_Init();
   MX_CRC_Init();
   MX_FATFS_Init();
+  MX_USB_HOST_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
@@ -201,50 +186,13 @@ int main(void)
   Init_Device();
   /* USER CODE END 2 */
 
-  /* Init scheduler */
-  osKernelInitialize();
-
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
-
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
-
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
-  /* creation of myTask02 */
-  myTask02Handle = osThreadNew(StartTask02, NULL, &myTask02_attributes);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
-  /* USER CODE END RTOS_EVENTS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  loop();
     /* USER CODE END WHILE */
+    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
   }
@@ -304,10 +252,10 @@ void SystemClock_Config(void)
 static void MX_NVIC_Init(void)
 {
   /* TIM7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(TIM7_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(TIM7_IRQn);
   /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(USART1_IRQn);
 }
 
@@ -1061,46 +1009,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-	HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
-    osDelay(500);
-  }
-  /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_StartTask02 */
-/**
-* @brief Function implementing the myTask02 thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTask02 */
-void StartTask02(void *argument)
-{
-  /* USER CODE BEGIN StartTask02 */
-  /* Infinite loop */
-  for(;;)
-  {
-	loop();
-    osDelay(1);
-  }
-  /* USER CODE END StartTask02 */
-}
-
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside
@@ -1116,16 +1024,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		mscounter++;
 		if((mscounter % 10) == 0) {
 
-			if(Running_Flag){	//?��?��?�� �???��
+			if(Running_Flag){	//?��?��?�� �????��
 				TotalTime++;
 				fProcessTime[CurrentProcess]++;
-				if(EndTimer_Flag == 0){	//?��?�� ???���?? ?��?��
+				if(EndTimer_Flag == 0){	//?��?�� ???���??? ?��?��
 					EndTimeCounter--;	//카운?��
 					if(EndTimeCounter>30000){
 						EndTimeCounter=0;
 					}
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???���?? ?���??
+						EndTimer_Flag = 1;	//???���??? ?���???
 						Endtime_Check_Process();
 						CurrentStep++;
 					}
@@ -1148,34 +1056,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				}
 			}
 			if(TestMode==1){
-				if(EndTimer_Flag == 0){	//?��?�� ???���?? ?��?��
+				if(EndTimer_Flag == 0){	//?��?�� ???���??? ?��?��
 					EndTimeCounter--;	//카운?��
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???���?? ?���??
+						EndTimer_Flag = 1;	//???���??? ?���???
 					}
 				}
 			}
 			else if(TestMode==2){
-				if(EndTimer_Flag == 0){	//?��?�� ???���?? ?��?��
+				if(EndTimer_Flag == 0){	//?��?�� ???���??? ?��?��
 					EndTimeCounter--;	//카운?��
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???���?? ?���??
+						EndTimer_Flag = 1;	//???���??? ?���???
 					}
 				}
 			}
 			else if(TestMode==3){
-				if(EndTimer_Flag == 0){	//?��?�� ???���?? ?��?��
+				if(EndTimer_Flag == 0){	//?��?�� ???���??? ?��?��
 					EndTimeCounter--;	//카운?��
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???���?? ?���??
+						EndTimer_Flag = 1;	//???���??? ?���???
 					}
 				}
 			}
 			else if(TestMode==9){
-				if(EndTimer_Flag == 0){	//?��?�� ???���?? ?��?��
+				if(EndTimer_Flag == 0){	//?��?�� ???���??? ?��?��
 					EndTimeCounter--;	//카운?��
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???���?? ?���??
+						EndTimer_Flag = 1;	//???���??? ?���???
 					}
 				}
 			}
