@@ -89,8 +89,6 @@ int FlashPreesureCondition[3]={};
 extern int PlasmaTime[2];
 int FlashPlasmaTime[2];
 
-
-extern float Pressure;
 extern int CalibrationTemp[4];
 extern float CalibrationVacuum;
 
@@ -135,10 +133,11 @@ extern float TemperatureData[300];
 extern unsigned int DataCounter;
 
 void InitLCD(void){	//LCD 초기화
-	HAL_Delay(1000);
+	HAL_Delay(500);
 	//DisplayFirstPage();
 	DisplayPage(60);
 	//DisplayPage(LCD_INFO_HISTORY_PAGE);
+	HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 	SetRTCFromLCD();
     //Start_Page
 	HAL_Delay(100);
@@ -376,7 +375,7 @@ void DisplayVacuumGraph(int number, int color){
 void LCD_Process(){
     int iValue;
     switch(LCD_rx_data[4]) {
-        case 0 :    //button
+        case 0x00 :    //button
             LCD_Function_Process(LCD_rx_data[5], LCD_rx_data[8]);
             break;
         case 0x02 :
@@ -508,6 +507,12 @@ void LCD_Process(){
             iValue |= LCD_rx_data[8];
             LCD_28(LCD_rx_data[5], iValue);
             break;
+        case 0x29 :    //ADMIN_PARTSTEST
+            iValue = LCD_rx_data[7];
+            iValue <<= 8;
+            iValue |= LCD_rx_data[8];
+            LCD_29(LCD_rx_data[5], iValue);
+            break;
         case 0x30 :    // set value;
             iValue = LCD_rx_data[7];
             iValue <<= 8;
@@ -573,6 +578,12 @@ void LCD_Process(){
 			iValue <<= 8;
 			iValue |= LCD_rx_data[8];
 			LCD_60(LCD_rx_data[5], iValue);
+			break;
+        case 0x62 :    // 60page board test
+			iValue = LCD_rx_data[7];
+			iValue <<= 8;
+			iValue |= LCD_rx_data[8];
+			LCD_62(LCD_rx_data[5], iValue);
 			break;
     }
     HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
@@ -1372,6 +1383,38 @@ void LCD_28(int index, int value){	//input Value
     }
 }
 
+void LCD_29(int index, int value){
+    switch(index) {
+		case 0x00 :
+			switch(value) {
+				case 0x01 :
+
+					break;
+				case 0x70 :
+					if(!HAL_GPIO_ReadPin(GPIO_OUT17_GPIO_Port, GPIO_OUT17_Pin)){
+						AC7(0);
+		        		DisplayIcon(0x6A,0x70,0);
+					}
+					else{
+						AC7(1);
+		        		DisplayIcon(0x6A,0x70,1);
+					}
+					break;
+			}
+			break;
+		case 0x01 : // TestValue
+			TestVacuumValue=value/10;
+			break;
+		case 0x05 : // 리크 률
+			TestLeakValue=value/10;
+			break;
+		case 0x09 : // 에러 온도 률
+			TestTempErrorValue=value;
+			break;
+    }
+    //Display30page();
+}
+
 void LCD_30(int index, int value){	//input Value
     switch(index) {
 		case 0x00 :
@@ -1918,188 +1961,236 @@ void LCD_60(int index, int value){	//input Value
 		case 0x00 :
 			switch(value) {
 				//AC Test
-				case 0x01 :
+				case 0x01 ://Doorheater
 					if(!HAL_GPIO_ReadPin(GPIO_OUT11_GPIO_Port, GPIO_OUT11_Pin)){
 						AC1(0);
-		        		DisplayIcon(0x6A,0x10,0);
+		        		//DisplayIcon(0x6A,0x10,0);
 					}
 					else{
 						AC1(1);
-		        		DisplayIcon(0x6A,0x10,1);
+		        		//DisplayIcon(0x6A,0x10,1);
 					}
 					break;
-				case 0x02 :
+				case 0x02 ://not used
 					if(!HAL_GPIO_ReadPin(GPIO_OUT12_GPIO_Port, GPIO_OUT12_Pin)){
 						AC2(0);
-		        		DisplayIcon(0x6A,0x20,0);
+		        		//DisplayIcon(0x6A,0x20,0);
 					}
 					else{
 						AC2(1);
-		        		DisplayIcon(0x6A,0x20,1);
+		        		//DisplayIcon(0x6A,0x20,1);
 					}
 					break;
 				case 0x03 :
 					if(!HAL_GPIO_ReadPin(GPIO_OUT13_GPIO_Port, GPIO_OUT13_Pin)){
 						AC3(0);
-		        		DisplayIcon(0x6A,0x30,0);
+		        		//DisplayIcon(0x6A,0x30,0);
 					}
 					else{
 						AC3(1);
-		        		DisplayIcon(0x6A,0x30,1);
+		        		//DisplayIcon(0x6A,0x30,1);
 					}
 					break;
 				case 0x04 :
 					if(!HAL_GPIO_ReadPin(GPIO_OUT14_GPIO_Port, GPIO_OUT14_Pin)){
 						AC4(0);
-		        		DisplayIcon(0x6A,0x40,0);
+		        		//DisplayIcon(0x6A,0x40,0);
 					}
 					else{
 						AC4(1);
-		        		DisplayIcon(0x6A,0x40,1);
+		        		//DisplayIcon(0x6A,0x40,1);
 					}
 					break;
 				case 0x05 :
 					if(!HAL_GPIO_ReadPin(GPIO_OUT15_GPIO_Port, GPIO_OUT15_Pin)){
 						AC5(0);
-		        		DisplayIcon(0x6A,0x50,0);
+		        		//DisplayIcon(0x6A,0x50,0);
 					}
 					else{
 						AC5(1);
-		        		DisplayIcon(0x6A,0x50,1);
+		        		//DisplayIcon(0x6A,0x50,1);
 					}
 					break;
 				case 0x06 :
 					if(!HAL_GPIO_ReadPin(GPIO_OUT16_GPIO_Port, GPIO_OUT16_Pin)){
 						//AC6(0);
 						VacuumPump(0);
-		        		DisplayIcon(0x6A,0x60,0);
+		        		//DisplayIcon(0x6A,0x60,0);
 					}
 					else{
 						//AC6(1);
 						VacuumPump(1);
-		        		DisplayIcon(0x6A,0x60,1);
+		        		//DisplayIcon(0x6A,0x60,1);
 					}
 					break;
-				case 0x07 :
+				case 0x07 :	//Plasma
 					if(!HAL_GPIO_ReadPin(GPIO_OUT17_GPIO_Port, GPIO_OUT17_Pin)){
 						AC7(0);
-		        		DisplayIcon(0x6A,0x70,0);
+		        		//DisplayIcon(0x6A,0x70,0);
 					}
 					else{
 						AC7(1);
-		        		DisplayIcon(0x6A,0x70,1);
+		        		//DisplayIcon(0x6A,0x70,1);
 					}
 					break;
 				case 0x08 :
 					if(!HAL_GPIO_ReadPin(GPIO_OUT18_GPIO_Port, GPIO_OUT18_Pin)){
 						AC8(0);
-		        		DisplayIcon(0x6A,0x80,0);
+		        		//DisplayIcon(0x6A,0x80,0);
 					}
 					else{
 						AC8(1);
-		        		DisplayIcon(0x6A,0x80,1);
+		        		//DisplayIcon(0x6A,0x80,1);
 					}
 					break;
 
 				//DC Test
-				case 0x09 :
+				case 0x09 ://Vacuum Valve
 					if(HAL_GPIO_ReadPin(GPIO_OUT1_GPIO_Port, GPIO_OUT1_Pin)){
 						DC1(0);
-		        		DisplayIcon(0x6B,0x10,0);
+		        		//DisplayIcon(0x6B,0x10,0);
 					}
 					else{
 						DC1(1);
-		        		DisplayIcon(0x6B,0x10,1);
+		        		//DisplayIcon(0x6B,0x10,1);
 					}
 					break;
 				case 0x0A :
 					if(HAL_GPIO_ReadPin(GPIO_OUT2_GPIO_Port, GPIO_OUT2_Pin)){
 						DC2(0);
-		        		DisplayIcon(0x6B,0x20,0);
+		        		//DisplayIcon(0x6B,0x20,0);
 					}
 					else{
 						DC2(1);
-		        		DisplayIcon(0x6B,0x20,1);
+		        		//DisplayIcon(0x6B,0x20,1);
 					}
 					break;
 				case 0x0B :
 					if(HAL_GPIO_ReadPin(GPIO_OUT3_GPIO_Port, GPIO_OUT3_Pin)){
 						DC3(0);
-		        		DisplayIcon(0x6B,0x30,0);
+		        		//DisplayIcon(0x6B,0x30,0);
 					}
 					else{
 						DC3(1);
-		        		DisplayIcon(0x6B,0x30,1);
+		        		//DisplayIcon(0x6B,0x30,1);
 					}
 					break;
-				case 0x0C :
+				case 0x0C ://Vent Valve
 					if(HAL_GPIO_ReadPin(GPIO_OUT4_GPIO_Port, GPIO_OUT4_Pin)){
 						DC4(0);
-		        		DisplayIcon(0x6B,0x40,0);
+		        		//DisplayIcon(0x6B,0x40,0);
 					}
 					else{
 						DC4(1);
-		        		DisplayIcon(0x6B,0x40,1);
+		        		//DisplayIcon(0x6B,0x40,1);
 					}
 					break;
-				case 0x0D :
+				case 0x0D ://Injectnion Valve
 					if(HAL_GPIO_ReadPin(GPIO_OUT5_GPIO_Port, GPIO_OUT5_Pin)){
 						DC5(0);
-		        		DisplayIcon(0x6B,0x50,0);
+		        		//DisplayIcon(0x6B,0x50,0);
 					}
 					else{
 						DC5(1);
-		        		DisplayIcon(0x6B,0x50,1);
+		        		//DisplayIcon(0x6B,0x50,1);
 					}
 					break;
 				case 0x0E :
 					if(HAL_GPIO_ReadPin(GPIO_OUT6_GPIO_Port, GPIO_OUT6_Pin)){
 						DC6(0);
-		        		DisplayIcon(0x6B,0x60,0);
+		        		//DisplayIcon(0x6B,0x60,0);
 					}
 					else{
 						DC6(1);
-		        		DisplayIcon(0x6B,0x60,1);
+		        		//DisplayIcon(0x6B,0x60,1);
 					}
 					break;
 				case 0x0F :
 					if(HAL_GPIO_ReadPin(GPIO_OUT7_GPIO_Port, GPIO_OUT7_Pin)){
 						DC7(0);
-		        		DisplayIcon(0x6B,0x70,0);
+		        		//DisplayIcon(0x6B,0x70,0);
 					}
 					else{
 						DC7(1);
-		        		DisplayIcon(0x6B,0x70,1);
+		        		//DisplayIcon(0x6B,0x70,1);
 					}
 					break;
 				case 0x10 :
 					if(HAL_GPIO_ReadPin(GPIO_OUT8_GPIO_Port, GPIO_OUT8_Pin)){
 						DC8(0);
-		        		DisplayIcon(0x6B,0x80,0);
+		        		//DisplayIcon(0x6B,0x80,0);
 					}
 					else{
 						DC8(1);
-		        		DisplayIcon(0x6B,0x80,1);
+		        		//DisplayIcon(0x6B,0x80,1);
 					}
 					break;
 				case 0x11 :
 					if(HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin)){
 						//페리펌프
-		        		DisplayIcon(0x6B,0x90,0);
+		        		//DisplayIcon(0x6B,0x90,0);
 					}
 					else{
 						//페리펌프
-		        		DisplayIcon(0x6B,0x90,1);
+		        		//DisplayIcon(0x6B,0x90,1);
 					}
 					break;
+				case 0x12 :
+		        	InitRFID();
+		        	ret1=ReadRFID();
+		        	DisplayRFIDNumber();
+		        	if(ret1==1){
+		        		rfid_callback();
+		        		Write_Flash();
+		        	}
+		        	DisplayPage(current_page);
+		        	break;
+				case 0x13 :
+		        	DisplayPage(LCD_FACTORY_VACUUM_CALIBRATION_PAGE);
+		        	break;
 			}
 			break;
-		case 0x01 : // Cycle 선택
+		case 0x01 :
 			break;
 
 	}
 
 	//Display60page();
+}
+
+void LCD_62(int index, int value){	//LCD_FACTORY_VACUUM_CALIBRATION_PAGE
+	switch(index) {
+		case 0x00 :
+			switch(value) {//AC Test
+				case 0x01 :
+		        	DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
+					break;
+				case 0x02 :
+					//m,b 저장
+					//로딩 불러오면서
+					//예정
+					DisplayPageValue(0x62, 0x11, m*1000);
+					DisplayPageValue(0x62, 0x15, b*10);
+		        	DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
+					break;
+				}
+		case 0x01 : // Set Chamber Temp	//대기
+			torrValue1=(float)value/10;
+			saveSensorDataAtTorrValue(&dataPoint1, torrValue1);
+			DisplayPageValue(0x62, 0x09, dataPoint1.adcValue);
+			calculateLinearTransformation(dataPoint1.adcValue,dataPoint1.torrValue,dataPoint2.adcValue,dataPoint2.torrValue, &m, &b);
+			DisplayPageValue(0x62, 0x11, m*1000);
+			DisplayPageValue(0x62, 0x15, b*10);
+			break;
+		case 0x05 : // Set Chamber Temp	//대기
+			torrValue2=(float)value/10;
+			saveSensorDataAtTorrValue(&dataPoint2, torrValue2);
+			DisplayPageValue(0x62, 0x0D, dataPoint2.adcValue);
+			calculateLinearTransformation(dataPoint1.adcValue,dataPoint1.torrValue,dataPoint2.adcValue,dataPoint2.torrValue, &m, &b);
+			DisplayPageValue(0x62, 0x11, m*1000);
+			DisplayPageValue(0x62, 0x15, b*10);
+			break;
+	}
 }
 
 
@@ -2194,27 +2285,13 @@ void DoActionButton(int key){	//00xx
         case 0x32:
 			DisplayPage(LCD_ADMIN_PARTSTEST_PAGE);
 			DisplayRFIDNumber();
-
-
-			DisplayPartsTESTIcon(1,VacuumPump_flag);
-			DisplayPartsTESTIcon(2,VacuumValve_flag);
-			DisplayPartsTESTIcon(3,VentValve_flag);
-			DisplayPartsTESTIcon(4,InjectionValve_flag);
-
-			/*
 			VacuumPump(0);
 			InjectionValve(0);
 			VacuumValve(0);
 			VentValve(0);
-
-
-        	VacuumPump_flag=0;
-        	VacuumValve_flag=0;
-        	InjectionValve_flag=0;
-        	VentValve_flag=0;
-
-        	화면이동간 확인 필요
-*/
+			Plasma(0);
+        	//다른 화면으로 이동할때 초기화 추가해야함
+			//중요
 			break;
 
 
@@ -2265,17 +2342,8 @@ void DoActionButton(int key){	//00xx
         	break;
 
         case 0x47:
-        	HeaterControlMode=0;
         	Inithardware();
-        	VacuumPump_flag=0;
-        	Plasma_flag=0;
-        	DoorLatch_flag=0;
-        	VacuumValve_flag=0;
-        	CirculationValve_flag=0;
-        	InhalationValve_flag=0;
-        	VentValve_flag=0;
-        	InjectionValve_flag=0;
-        	Fan_flag=0;
+        	HeaterControlMode=0;
         	//DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
         	//여기 테스트중
         	DisplayPage(60);
@@ -2283,37 +2351,20 @@ void DoActionButton(int key){	//00xx
         	break;
 
         case 0x99:
-        	HeaterControlMode=1;
         	DisplayPage(LCD_FACTORY_TESTMODE_PAGE);
         	Inithardware();
-        	VacuumPump_flag=0;
-        	Plasma_flag=0;
-
-        	DoorHeater_flag=0;
-        	ChamberHeater_flag=0;
-        	ChamberBackHeater_flag=0;
-        	VaporizerHeater_flag=0;
-        	CirculationHeater_flag=0;
-
-        	DoorLatch_flag=0;
-        	VacuumValve_flag=0;
-        	CirculationValve_flag=0;
-        	InhalationValve_flag=0;
-        	VentValve_flag=0;
-        	InjectionValve_flag=0;
-        	Fan_flag=0;
-
+        	HeaterControlMode=1;
         	break;
 
-        case 0xFF:
+        case 0xFF:	//도어 오픈
         	if(Running_Flag==0){
-        		DoorLatch_flag=1;
+        		DoorOpenFlag=1;
         	}
         	break;
 
 
     }
-    //HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
+    HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 }
 
 
@@ -2453,14 +2504,6 @@ void DisplayIcon(int page, int index, int value){
 	HAL_UART_Transmit(LCD_USART, icondisplay, 8, 10);
 }
 
-
-
-void DisplayPartsTESTIcon(int index, int value){
-	icon_display[4] = 0x5F;
-	icon_display[5] = icon_partstest_index[index];
-	icon_display[7] = value;
-	HAL_UART_Transmit(LCD_USART, icon_display, 8, 10);
-}
 void DisplayProcessIcons(int index){
 	for(int i=1;i<7;i++){
 		DisplayProcessIcon(i,0);
@@ -2705,7 +2748,6 @@ void ReadCycleTime(){
 
 //Value display
 unsigned char   value_display[10] = {0x5A, 0xA5, 0x05, 0x82, 0x02, 0x00, 0x00, 0x00, 0x00};
-unsigned char   Temp_display[10] = {0x5A, 0xA5, 0x05, 0x82, 0x01, 0x00, 0x00, 0x00, 0x00};
 
 void DisplayValue(int index, float value){
     unsigned int uivalue;
@@ -2726,16 +2768,6 @@ void DisplayCycleValue(int value){
 	else if(value==3){
 			DisplayPage8Char(0x34,0x01,"ADVANCED");
 	}
-}
-
-void DisplayTemp(int index, float value){
-    unsigned int uivalue;
-    uivalue = (value * 10);
-    Temp_display[2] = 0x05;
-    Temp_display[5] = index;
-    Temp_display[6] = uivalue >> 8;
-    Temp_display[7] = uivalue & 0xff;
-    HAL_UART_Transmit(LCD_USART, Temp_display, 8, 10);
 }
 
 void DisplayTempValues(){
@@ -2778,7 +2810,12 @@ void DisplayTempValues(){
 
 
 void DisplayVacuumSensor(){
-	DisplayPageValue(0x31,0x31,Pressure*10);
+	Pressure *= .9;
+	Pressure += Pressure2*0.1;
+	DisplayPageValue(0x60,0x11,Pressure*10);
+	DisplayPageValue(0x62,0x19,data1);
+	DisplayPageValue(0x62,0x1D,Pressure*10);
+
 }
 
 void DisplayRFIDNumber(){	// RFID Display
@@ -3176,6 +3213,13 @@ void Display31page(){
 	스팬 값
 	제로 값
 	 */
+
+	//Raw 데이터
+
+
+
+
+	//보정된 값
 	DisplayPageValue(0x31,0x01,Temperature[0]*10);
 	DisplayPageValue(0x31,0x05,Temperature[1]*10);
 	DisplayPageValue(0x31,0x09,Temperature[2]*10);
@@ -3188,9 +3232,6 @@ void Display31page(){
 	DisplayPageValue(0x31,0x29,CalibrationTemp[2]*10);
 	DisplayPageValue(0x31,0x2D,CalibrationTemp[3]*10);
 	DisplayPageValue(0x31,0x35,CalibrationVacuum*10);
-
-
-	DisplayVacuumSensor();
 
 }
 void Display33page(){
@@ -3396,15 +3437,42 @@ void GetTime(void){
 }
 
 void DisplayTemprature(){
+
 	DisplayPageValue(0x60,0x01,Temperature[0]*10);
 	DisplayPageValue(0x60,0x05,Temperature[1]*10);
 	DisplayPageValue(0x60,0x09,Temperature[2]*10);
 	DisplayPageValue(0x60,0x0D,Temperature[3]*10);
+}
 
+void DisplayIcons(){
+	DisplayIcon(0x6A,0x10,!HAL_GPIO_ReadPin(GPIO_OUT11_GPIO_Port, GPIO_OUT11_Pin));
+	DisplayIcon(0x6A,0x20,!HAL_GPIO_ReadPin(GPIO_OUT12_GPIO_Port, GPIO_OUT12_Pin));
+	DisplayIcon(0x6A,0x30,!HAL_GPIO_ReadPin(GPIO_OUT13_GPIO_Port, GPIO_OUT13_Pin));
+	DisplayIcon(0x6A,0x40,!HAL_GPIO_ReadPin(GPIO_OUT14_GPIO_Port, GPIO_OUT14_Pin));
+	DisplayIcon(0x6A,0x50,!HAL_GPIO_ReadPin(GPIO_OUT15_GPIO_Port, GPIO_OUT15_Pin));
+	DisplayIcon(0x6A,0x60,!HAL_GPIO_ReadPin(GPIO_OUT16_GPIO_Port, GPIO_OUT16_Pin));
+	DisplayIcon(0x6A,0x70,!HAL_GPIO_ReadPin(GPIO_OUT17_GPIO_Port, GPIO_OUT17_Pin));
+	DisplayIcon(0x6A,0x80,!HAL_GPIO_ReadPin(GPIO_OUT18_GPIO_Port, GPIO_OUT18_Pin));
+
+	DisplayIcon(0x6B,0x10,HAL_GPIO_ReadPin(GPIO_OUT1_GPIO_Port, GPIO_OUT1_Pin));
+	DisplayIcon(0x6B,0x20,HAL_GPIO_ReadPin(GPIO_OUT2_GPIO_Port, GPIO_OUT2_Pin));
+	DisplayIcon(0x6B,0x30,HAL_GPIO_ReadPin(GPIO_OUT3_GPIO_Port, GPIO_OUT3_Pin));
+	DisplayIcon(0x6B,0x40,HAL_GPIO_ReadPin(GPIO_OUT4_GPIO_Port, GPIO_OUT4_Pin));
+	DisplayIcon(0x6B,0x50,HAL_GPIO_ReadPin(GPIO_OUT5_GPIO_Port, GPIO_OUT5_Pin));
+	DisplayIcon(0x6B,0x60,HAL_GPIO_ReadPin(GPIO_OUT6_GPIO_Port, GPIO_OUT6_Pin));
+	DisplayIcon(0x6B,0x70,HAL_GPIO_ReadPin(GPIO_OUT7_GPIO_Port, GPIO_OUT7_Pin));
+	DisplayIcon(0x6B,0x80,HAL_GPIO_ReadPin(GPIO_OUT8_GPIO_Port, GPIO_OUT8_Pin));
+	DisplayIcon(0x6B,0x90,HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin));
+
+	DisplayIcon(0x6C,0x10,DoorHandleCheck());
+	DisplayIcon(0x6C,0x20,DoorLatchCheck());
+	DisplayIcon(0x6C,0x30,BottleCheck());
+	DisplayIcon(0x6C,0x40,BottleDoorCheck());
+	DisplayIcon(0x6C,0x50,LevelSensor1Check());
+	DisplayIcon(0x6C,0x60,LevelSensor2Check());
 }
 
 void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsigned char *week, unsigned char *hour, unsigned char *minute, unsigned char *second){
-
     __disable_irq();
     huart1.RxState= HAL_UART_STATE_READY;
     memset(LCD_rx_data, 0, 30);
@@ -3414,7 +3482,6 @@ void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsi
     *month = LCD_rx_data[7];
     *day = LCD_rx_data[8];
     *week = LCD_rx_data[9];
-
 
     memset(LCD_rx_data, 0, 30);
     HAL_UART_Transmit(LCD_USART, (uint8_t*)rtc_time_get, 6, 10);

@@ -16,11 +16,6 @@
 #include "solenoidvalve.h"
 #include "vacuumpump.h"
 
-extern int DoorHeater_flag, AC2_flag, ChamberBackHeater_flag, VaporizerHeater_flag, AC5_flag, VacuumPump_flag, Plasma_flag, AC8_flag;	//AC
-extern int VacuumValve_flag, DC2_flag, DC3_flag, VentValve_flag, InjectionValve_flag, DoorLatch_flag, Fan_flag, ChamberHeater_flag, PeristalticPump_flag;	//DC
-extern int CirculationHeater_flag;	//AC5_flag 할당
-extern int CirculationValve_flag, InhalationValve_flag;	//DC2_flag, DC3_flag 할당
-
 void DC1(int onoff);
 void DC2(int onoff);
 void DC3(int onoff);

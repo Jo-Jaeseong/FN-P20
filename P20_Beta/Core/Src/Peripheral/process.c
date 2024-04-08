@@ -7,6 +7,7 @@
 
 #include "main.h"
 #include "stdbool.h"
+#include "string.h"
 
 #include "hardware.h"
 #include "sensor.h"
@@ -94,10 +95,8 @@ unsigned char Processflag=0 ,CurrentProcess=0, CurrentStep=0, ProcessStep=0;
 extern unsigned char Running_Flag, EndTimer_Flag, ProcessWait_Flag;
 
 int Vaccum_Check=0;
-int HeaterControlMode=1;
 
 extern int PlasmaControl_flag;
-extern float Pressure;
 extern int PreesureCondition[3];
 extern int ProcessNum,StepNum;
 extern struct Process_data_format	CycleData[7][21];
@@ -109,14 +108,14 @@ extern unsigned int TotalTime;
 extern unsigned int fProcessTime[7];
 extern unsigned int ProcessTime[7];
 
-extern int DoorLatch_flag;
-
 extern int current_page;
 
 int Vacuum_Check_Count=0;
 
 extern unsigned char Timer_DeliSecond_Flag, Timer_Half_1s_Flag, Timer_1s_Flag;
 extern unsigned char UART_Receive_Flag, EndTimer_Flag;
+
+int HeaterControlMode=1;
 
 void loop(){
 	if(UART_Receive_Flag) {
@@ -142,8 +141,9 @@ void loop(){
 }
 
 void DeliSecondProcess(void){
-	//GetValue();
-
+	GetValue();
+	DisplayVacuumSensor();
+	//printf("max:4095, min:3500, data1:%d, data2:%d, data3:%d  \n",data1/10, Pressure, Pressure2);
 	if(PlasmaControl_flag==1){
 		PlasmaControl();
 	}
@@ -152,6 +152,7 @@ int tempcnt=0;
 
 void HalfSecondProcess(void){
 	//GetValue();
+	ValueFilter();
 	Check_Temp(tempcnt);
 	if(tempcnt>=3){
 		tempcnt=0;
@@ -160,28 +161,27 @@ void HalfSecondProcess(void){
 		tempcnt++;
 	}
 	DisplayTemprature();
+	DisplayIcons();
 
-	DisplayPartsTESTIcon(5,DoorHandleCheck());
-	DisplayPartsTESTIcon(6,DoorLatchCheck());
-	DisplayPartsTESTIcon(7,BottleCheck());
-	DisplayPartsTESTIcon(8,BottleDoorCheck());
-	DisplayPartsTESTIcon(9,LevelSensor1Check());
-
-
-	//Door Open
-
+	//도어 오픈
 	if(Running_Flag==0){
-		if(DoorLatch_flag==1){
-	    	DoorLatch(1);
-	    	DoorLatch_flag=0;
-	    }
-		else if(DoorLatch_flag==0){
-			DoorLatch(0);
-			DoorLatch_flag=0;
-		}
-		DoorLatch_flag=DoorOpenProcess();
-	}
+		if(DoorOpenFlag==1){
+			if(DoorLatchCheck()){
+				DoorLatch(1);
+				DoorOpenFlag=0;
+			}
+			else{
+				DoorLatch(0);
+				DoorOpenFlag=0;
+			}
 
+	    }
+		else if(DoorOpenFlag==0){
+			DoorLatch(0);
+			DoorOpenFlag=0;
+		}
+		DoorOpenFlag=DoorOpenProcess();
+	}
 
 	if(LevelSensor1Check()){
 		Liquidflag=2;
@@ -199,8 +199,8 @@ void HalfSecondProcess(void){
 	if(Running_Flag==1){
 
 	}
-	HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
-	TESTPIN=HAL_GPIO_ReadPin(LED_GR_GPIO_Port, LED_GR_Pin);
+	//HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
+	//TESTPIN=HAL_GPIO_ReadPin(LED_GR_GPIO_Port, LED_GR_Pin);
 
 }
 
@@ -281,7 +281,6 @@ void OneSecondProcess(void){
 
 
 	}
-	DisplayVacuumSensor();
 	if(HeaterControlMode==1){
 		HeaterControl();
 	}
@@ -290,11 +289,10 @@ void OneSecondProcess(void){
 void Init_Device(){
 	//hardware reset
 	Inithardware();
-	//InitADC();
+	InitADC();
     Read_Flash();
-    Read_Setting_Data_Flash();
+    //Read_Setting_Data_Flash();
 	InitLCD();
-	//Init_Vacuumsensor();
 }
 
 void Inithardware(){
@@ -317,10 +315,7 @@ void Inithardware(){
 	PeristalticSpeed();
 	TurnOffPeristalticPump();
 
-	DoorHeater_flag=0;
-	ChamberHeater_flag=0;
-	ChamberBackHeater_flag=0;
-	VaporizerHeater_flag=0;
+	HeaterControlMode=1;
 }
 
 
@@ -330,8 +325,8 @@ void Inithardware(){
 
 void Start(){
 	//Data save-related variables
-	memset(PressureData, 0, 300);
-	memset(TemperatureData, 0, 300);
+	memset(PressureData, 0, sizeof(PressureData));
+	memset(TemperatureData, 0, sizeof(TemperatureData));
 	DataCounter=0;
 	TensecondCounter=0;
 	PressureData[0]=Pressure;
@@ -342,10 +337,7 @@ void Start(){
 	Select_NORMAL_MODE=1;
 	Running_Flag=1;
 
-	DoorHeater_flag=1;
-	ChamberHeater_flag=1;
-	ChamberBackHeater_flag=1;
-	VaporizerHeater_flag=1;
+	HeaterControlMode=2;
 
 	CurrentProcess=1;
 	CurrentStep=1;
@@ -354,7 +346,7 @@ void Start(){
 	Stopflag=0;
 	TotalTime=0;
 	Liquidflag=0;
-    memset(deviceerror, 0, 12);
+    memset(deviceerror, 0, sizeof(deviceerror));
 
 	VacuumPump(1);
 	Fan(1);
@@ -369,24 +361,6 @@ void Start(){
 }
 
 void Stop(){
-	/*
-	Running_Flag=0;
-	DoorHeater_flag=0;
-	ChamberHeater_flag=0;
-	ChamberBackHeater_flag=0;
-	VaporizerHeater_flag=0;
-	PlasmaControl_flag=0;
-	CurrentProcess=1;
-	CurrentStep=1;
-	VacuumPump(0);
-	Fan(0);
-	VacuumValve(0);
-	VentValve(0);
-	InjectionValve(0);
-	Plasma(0);
-	PeriPump(0);
-	EndTimer_Flag=0;
-	*/
 
 	deviceerror[1]=1;
 }
@@ -396,10 +370,7 @@ void FactoryTestStart(){
 	Select_NORMAL_MODE=0;
 	Running_Flag=1;
 
-	DoorHeater_flag=1;
-	ChamberHeater_flag=1;
-	ChamberBackHeater_flag=1;
-	VaporizerHeater_flag=1;
+	HeaterControlMode=2;
 
 	CurrentProcess=1;
 	CurrentStep=1;
@@ -409,7 +380,7 @@ void FactoryTestStart(){
 	Stopflag=0;
 	TotalTime=0;
 	Liquidflag=0;
-    memset(deviceerror, 0, 12);
+    memset(deviceerror, 0, sizeof(deviceerror));
 
 	VacuumPump(1);
 	Fan(1);
@@ -424,24 +395,6 @@ void FactoryTestStart(){
 }
 
 void FactoryTestStop(){
-	/*
-	Running_Flag=0;
-	DoorHeater_flag=0;
-	ChamberHeater_flag=0;
-	ChamberBackHeater_flag=0;
-	VaporizerHeater_flag=0;
-	PlasmaControl_flag=0;
-	CurrentProcess=1;
-	CurrentStep=1;
-	VacuumPump(0);
-	Fan(0);
-	VacuumValve(0);
-	VentValve(0);
-	InjectionValve(0);
-	Plasma(0);
-	PeriPump(0);
-	EndTimer_Flag=0;
-	*/
 	deviceerror[1]=1;
 }
 void TestModeStart(int mode){
@@ -763,10 +716,7 @@ void NormalMode(){
 		Plasma(0);
 		PeriPump(0);
 
-		DoorHeater_flag=0;
-		ChamberHeater_flag=0;
-		ChamberBackHeater_flag=0;
-		VaporizerHeater_flag=0;
+		HeaterControlMode=1;
 
 		if(Stopflag==0){			//정상 종료
 			DisplayPage8Char(0x12,0x01,"COMPLETE");
@@ -870,10 +820,10 @@ void NormalMode(){
 		}
 
 		if(CurrentProcess==5){
-			VaporizerHeater_flag=0;
+			HeaterControlMode=1;
 		}
 		else if(CurrentProcess==6){
-			VaporizerHeater_flag=0;
+			HeaterControlMode=1;
 		}
 		EndTimeCounter = CycleData[CurrentProcess][CurrentStep].Time*100;;//공정 시간(초)
 	}
@@ -914,10 +864,7 @@ void FactoryTestMode(){
 		Plasma(0);
 		PeriPump(0);
 
-		DoorHeater_flag=0;
-		ChamberHeater_flag=0;
-		ChamberBackHeater_flag=0;
-		VaporizerHeater_flag=0;
+		HeaterControlMode=1;
 
 		CarbonFilter_Count();
 		HEPAFilter_Count();
@@ -953,7 +900,7 @@ void FactoryTestMode(){
 			Liquidflag=1;
 			PeriPump(1);
 			//볼륨 카은트
-			flash_sterilant_volume[RFIDData.currentID]=flash_sterilant_volume[RFIDData.currentID]--;
+			flash_sterilant_volume[RFIDData.currentID]=flash_sterilant_volume[RFIDData.currentID]-1;
 			if(flash_sterilant_volume[RFIDData.currentID]<=0){
 				flash_sterilant_volume[RFIDData.currentID]=0;
 			}
@@ -996,10 +943,10 @@ void FactoryTestMode(){
 		}
 
 		if(CurrentProcess==5){
-			VaporizerHeater_flag=0;
+			HeaterControlMode=1;
 		}
 		else if(CurrentProcess==6){
-			VaporizerHeater_flag=0;
+			HeaterControlMode=1;
 		}
 		EndTimeCounter = CycleData[CurrentProcess][CurrentStep].Time*100;;//공정 시간(초)
 	}
@@ -1160,10 +1107,7 @@ void ProcessEndTimer(void){
 			temperror[3]=0;
 			temperror[4]=0;
 
-			DoorHeater_flag=0;
-			ChamberHeater_flag=0;
-			ChamberBackHeater_flag=0;
-			VaporizerHeater_flag=0;
+			HeaterControlMode=1;
 			TestProcess=2;
 			EndTimeCounter=100;
 		}

@@ -13,21 +13,22 @@
 #define DoorHandle_Port	GPIO_IN5_GPIO_Port
 #define DoorHandle_Pin	GPIO_IN5_Pin
 
-extern int DoorLatch_flag;
+extern unsigned char Running_Flag;
+
+
 int DoorCheckcnt=0;
+int DoorOpenFlag;
 
 // ------------------- Functions -------------------
 
 
 int DoorHandleCheck(){
-	int DoorHandle_flag=0;
 	if(HAL_GPIO_ReadPin(DoorHandle_Port, DoorHandle_Pin)==1){
-		DoorHandle_flag=0;
+		return 0;
 	}
 	else{
-		DoorHandle_flag=1;
+		return 1;
 	}
-	return DoorHandle_flag;
 }
 
 
@@ -37,14 +38,34 @@ int DoorLatchCheck(){
 }
 
 int BottleDoorCheck(){
-	return Limit2;
+	return Limit2();
 }
 
 int BottleCheck(){
-	return Limit3;
+	return Limit3();
 }
 
 
+void DoorSensorOpenProcess(){
+	if(Running_Flag==0){
+		if(DoorHandleCheck()){//핸드센서 체크 1초
+			if(DoorLatchCheck()){//래치가 잠겨있다면,
+				DoorLatch(1);
+			}
+			else{				//래치가 열려있다면, 동작하지 않음.
+				DoorLatch(0);
+			}
+		}
+	}
+}
+
+void ButtonSensorOpenProcess(){
+	if(Running_Flag==0){
+		if(DoorLatchCheck()){//래치가 잠겨있다면,
+			DoorLatch(1);
+		}
+	}
+}
 
 int DoorOpenProcess(){
 	if(DoorHandleCheck()){
@@ -53,16 +74,14 @@ int DoorOpenProcess(){
 	else{
 		DoorCheckcnt=0;
 	}
-	if(DoorCheckcnt==2){
+	if(DoorCheckcnt==1){
 		if(DoorLatchCheck()){
 			return 1;
 			DoorCheckcnt=0;
-		}
-		else{
-			return 0;
 		}
 	}
 	else{
 		return 0;
 	}
 }
+

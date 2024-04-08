@@ -5,18 +5,20 @@
  *      Author: CBT
  */
 
-
-#include <vacuumsensor.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "main.h"
 
-extern ADC_HandleTypeDef hadc1;
-extern DMA_HandleTypeDef hdma_adc1;
+#include <sensor.h>
+#include <peripheral.h>
 
-uint32_t uiDensity, adcData[5];
-float Pressure=0;
+extern ADC_HandleTypeDef hadc2;
+extern DMA_HandleTypeDef hdma_adc2;
+
+
 extern unsigned char Running_Flag;
 int maxDensity=0, Density=0;
-int arrDensity[10],arrPressure[5];
+
 int avgmax=0;
 int Sensor_index=0;
 int Sensor2_index=0;
@@ -26,105 +28,87 @@ int PreesureCondition[3]={};
 float CalibrationVacuum;
 
 
+uint32_t uiDensity, adcData[5], arrDensity[5];
+int Pressure;
+float Pressure2;
+int data1=0;
+int data2=0;
+int data3=0;
+int HighMeasureFlag, LowMeasureFlag, MeasureFlag, MeasureCount;
+
+
+int sensorcount=0;
+
+SensorData dataPoint1, dataPoint2;
+
+float torrValue1, torrValue2;
+
+float m, b; // 선형 변환을 위한 변수들
+
+
 void InitADC(){
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcData, 5);
+	HAL_ADC_Start_DMA(&hadc2 , (uint32_t *)adcData, 5);
 }
 
 void GetValue(){
-	uiDensity = adcData[0];
-	Density = uiDensity-792;
-	float test = Density/(3.78);
-//	float test = uiDensity;
-	arrDensity[Sensor_index]=test;
-	//Pressure=uiDensity;
 	//Pressure=adcData[0];
+	//Pressure=adcData[0]/10;
+
+	//Pressure=movingAverageFilter(adcData,5);
+	//data2 *= .95;
+
+
 	/*
-	Sensor_index++;
-	if(Sensor_index==10
-			){
-		DisplayAvgValue();
+	sensorcount++;
+	if(sensorcount==5){
+		Pressure2=(movingAverageFilter(arrDensity,5)*0.266-244.14);
+		//Pressure2=(movingAverageFilter(arrDensity,5));
+		sensorcount=0;
 	}
 	*/
 
+	data2=movingAverageFilter(adcData,5);
+
+
+	//data1=movingAverageFilter(adcData,5);
+
 }
-/*
-//중간값
-void DisplayAvgValue() {
-        int n = sizeof(arrDensity) / sizeof(int);
-        int tmp;
+void ValueFilter(){
+	//FirstMeasureFlag 언제 적용할지
+	//초기값
+	data1 *= .9;
+	data1 += data2*0.1;
 
-        for(int i=0; i < n - 1; i++){
-                for(int j=0; j < n - 1 - i; j++) {
-                        if (arrDensity[j] > arrDensity[j + 1]) {
-                                tmp = arrDensity[j];
-                                arrDensity[j] = arrDensity[j + 1];
-                                arrDensity[j + 1] = tmp;
-                        }
-                }
-        }
-
-        if(n % 2 == 1) {
-        	Pressure = arrDensity[(n / 2)];
-        } else {
-        	Pressure = (arrDensity[n / 2 - 1] + arrDensity[n / 2]) * 1.0 / 2.0;
-        }
-        Sensor_index=0;
-}
-*/
-
-//평균값
-void DisplayAvgValue(){
-	int hap=0,max=0,min=10000;
-
-	float avg=0;
-	int repeat=sizeof(arrDensity)/sizeof(int);
-	for(int i=0;i<repeat;i++){
-		hap+=arrDensity[i];
-		if(arrDensity[i]>max){
-			max = arrDensity[i];
-		}
-		if(arrDensity[i]<min){
-			min = arrDensity[i];
-		}
-	}
-	hap = hap-max-min;
-	avg = hap/(sizeof(arrDensity)/sizeof(int)-2);
-	Pressure = avg;
-	Sensor_index=0;
-
-
-	arrPressure[Sensor2_index]=avg;
-	Sensor2_index++;
-	if(Sensor2_index==5){
-		DisplayAvgPressure();
+	//data1=data1/10;
+	Pressure2=convertData1ToTorr(data1, m, b);
+	if(Pressure2>760){
+		Pressure2=760;
 	}
 }
 
-void DisplayAvgPressure(){
-	int hap=0,max=0,min=10000;
-
-	float avg=0;
-	int repeat=sizeof(arrPressure)/sizeof(int);
-	for(int i=0;i<repeat;i++){
-		hap+=arrPressure[i];
-		if(arrPressure[i]>max){
-			max = arrPressure[i];
-		}
-		if(arrPressure[i]<min){
-			min = arrPressure[i];
-		}
-	}
-	hap = hap-max-min;
-	avg = hap/(sizeof(arrPressure)/sizeof(int)-2);
-	Pressure= avg;
-	Sensor2_index=0;
+uint32_t movingAverageFilter(uint32_t *samples, uint8_t sampleCount) {
+    uint32_t sum = 0;
+    for (uint8_t i = 0; i < sampleCount; i++) {
+        sum += samples[i];
+    }
+    return sum / sampleCount;
 }
 
-void arrInsert(int *ar, int idx, int Iar){
-	memmove(ar+idx+1,ar+idx,sizeof(ar)/sizeof(int)-idx+1);
-	ar[idx]=Iar;
-	idx++;
+void saveSensorDataAtTorrValue(SensorData *dataPoint, float torrValue) {
+    dataPoint->torrValue = torrValue;
+    dataPoint->adcValue = data1 ;
+    printf("Torr 값: %.2f, ADC 값: %d 저장되었습니다.\n", dataPoint->torrValue, dataPoint->adcValue);
 }
-void arrAppend(int *ar, float Iar){
-	arrInsert(ar, sizeof(ar)/sizeof(int), Iar);
+
+void calculateLinearTransformation(float data1Point1, float torrPoint1, float data1Point2, float torrPoint2, float* m, float* b) {
+    // 기울기(m) 계산
+    *m = (torrPoint2 - torrPoint1) / (data1Point2 - data1Point1);
+
+    // y절편(b) 계산
+    *b = torrPoint1 - (*m * data1Point1);
+}
+
+// 주어진 data1 값의 스케일을 조절하여 Torr 단위로 변환하는 함수
+float convertData1ToTorr(float data1, float m, float b) {
+    return m * data1 + b;
 }

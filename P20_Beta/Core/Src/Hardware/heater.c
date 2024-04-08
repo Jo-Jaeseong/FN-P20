@@ -7,6 +7,7 @@
 #include "main.h"
 #include "sensor.h"
 #include "hardware.h"
+#include "peripheral.h"
 
 int temperror[5]={};
 
@@ -59,6 +60,9 @@ void ChamberBackHeater(int onoff){
 void VaporizerHeater(int onoff){
 	AC4(onoff);
 }
+
+
+
 
 void CirculationHeater(int onoff){
 	AC5(onoff);
@@ -113,55 +117,32 @@ void VaporizerHeaterControl(int Temp){
 }
 
 void HeaterControl(){
-	/*
 
-	#define State1			0	대기
-	#define State2			1	공정
-	#define State3			2	슬립
-	*/
+	switch (HeaterControlMode) {
+		case 0:	//컨트롤 안함
+			break;
+		case 1:	//대기
+			DoorHeaterControl(DoorSettingTemp[0]);
+			ChamberHeaterControl(ChamberSettingTemp[0]);
+			ChamberBackHeaterControl(ChamberBackSettingTemp[0]);
+			VaporizerHeaterControl(VaporizerSettingTemp[0]);
+			break;
 
-	//DoorHeaterControl
-	if(DoorHeater_flag==State1){			//대기
-		DoorHeaterControl(DoorSettingTemp[State1]);
-	}
-	else if(DoorHeater_flag==State2){	//공정
-		DoorHeaterControl(DoorSettingTemp[State2]);
-	}
-	else{									//슬립
-		DoorHeaterControl(DoorSettingTemp[State3]);
-	}
+		case 2:	//공정
+			DoorHeaterControl(DoorSettingTemp[1]);
+			ChamberHeaterControl(ChamberSettingTemp[1]);
+			ChamberBackHeaterControl(ChamberBackSettingTemp[1]);
+			VaporizerHeaterControl(VaporizerSettingTemp[1]);
+			break;
 
-	//ChamberHeaterControl
-	if(ChamberHeater_flag==State1){
-		ChamberHeaterControl(ChamberSettingTemp[State1]);
-	}
-	else if(ChamberHeater_flag==State2){
-		ChamberHeaterControl(ChamberSettingTemp[State1]);
-	}
-	else{
-		ChamberHeaterControl(ChamberSettingTemp[State3]);
-	}
-
-	//ChamberBackHeaterControl
-	if(ChamberBackHeater_flag==State1){
-		ChamberBackHeaterControl(ChamberBackSettingTemp[State1]);
-	}
-	else if(ChamberBackHeater_flag==State2){
-		ChamberBackHeaterControl(ChamberBackSettingTemp[State2]);
-	}
-	else{
-		ChamberBackHeaterControl(ChamberBackSettingTemp[State3]);
-	}
-
-	//VaporizerHeaterControl
-	if(VaporizerHeater_flag==State1){
-		VaporizerHeaterControl(VaporizerSettingTemp[State1]);
-	}
-	else if(VaporizerHeater_flag==State2){
-		VaporizerHeaterControl(VaporizerSettingTemp[State2]);
-	}
-	else{
-		VaporizerHeaterControl(VaporizerSettingTemp[State3]);
+		case 3:	//슬립
+			DoorHeaterControl(DoorSettingTemp[2]);
+			ChamberHeaterControl(ChamberSettingTemp[2]);
+			ChamberBackHeaterControl(ChamberBackSettingTemp[2]);
+			VaporizerHeaterControl(VaporizerSettingTemp[2]);
+			break;
+		default:
+			break;
 	}
 }
 

@@ -10,6 +10,7 @@
 
 // ------------------- Variables -------------------
 
+
 // ------------------- Functions -------------------
 void DoorLatch(int onoff){
 	DC6(onoff);

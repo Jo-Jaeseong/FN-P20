@@ -59,7 +59,8 @@
 #define LCD_MANAGEMENT_WRONG_PW_POPUP					51
 #define LCD_LOGOUT_POPUP								52
 
-#define LCD_FACTORY_CONTROLTEST_PAGE					80
+#define LCD_FACTORY_CONTROLTEST_PAGE					60
+#define LCD_FACTORY_VACUUM_CALIBRATION_PAGE				62
 #define LCD_LOADING_PAGE								90
 
 struct Process_data_format {
@@ -103,6 +104,7 @@ void LCD_25(int index, int value);
 void LCD_26(int index, int value);
 void LCD_27(int index, int value);
 void LCD_28(int index, int value);
+void LCD_29(int index, int value);
 
 void LCD_30(int index, int value);
 void LCD_31(int index, int value);
@@ -115,6 +117,7 @@ void LCD_38(int index, int value);
 void LCD_39(int index, int value);
 void LCD_44(int index, int value);
 void LCD_60(int index, int value);
+void LCD_62(int index, int value);
 
 void DoActionButton(int key);
 
@@ -123,7 +126,6 @@ void ProcessSettingButton(int key);
 void DisplayProcessIcon(int index, int value);
 void DisplayStepIcon(int index, int value);
 void DisplayPartsIcon(int index, int value);
-void DisplayPartsTESTIcon(int index, int value);
 void DisplayProcessIcons(int index);
 void DisplayStepIcons(int index);
 void DisplayPartsIcons(void);
@@ -200,6 +202,7 @@ void SetRTCFromLCD();
 void ReadInforDataFromLCD();
 
 void DisplayTemprature();
+void DisplayIcons();
 
 
 unsigned char hex2bcd (unsigned char x);

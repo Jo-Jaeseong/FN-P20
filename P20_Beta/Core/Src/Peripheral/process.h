@@ -23,6 +23,8 @@ struct data_format {
 };
 
 
+extern int HeaterControlMode;
+
 void loop();
 
 void DeliSecondProcess(void);

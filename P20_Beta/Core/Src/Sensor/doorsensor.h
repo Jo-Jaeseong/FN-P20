@@ -8,6 +8,8 @@
 #ifndef SRC_SENSOR_DOORSENSOR_H_
 #define SRC_SENSOR_DOORSENSOR_H_
 
+extern int DoorOpenFlag;
+
 int DoorHandleCheck();
 int DoorLatchCheck();
 int BottleDoorCheck();

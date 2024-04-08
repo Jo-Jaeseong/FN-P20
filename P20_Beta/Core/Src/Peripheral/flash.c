@@ -19,6 +19,15 @@
 
 __attribute__((__section__(".user_data"))) const char userConfig[1024];
 
+uint32_t startTick, endTick, duration;
+/*
+startTick = HAL_GetTick(); // 기능 실행 전 타임스탬프 캡처
+// 여기에 측정하고자 하는 기능 혹은 함수 호출
+endTick = HAL_GetTick(); // 기능 실행 후 타임스탬프 캡처
+duration = endTick - startTick; // 실행 시간(밀리초 단위)
+*/
+
+
 #define USER_FLASH_LAST_PAGE_ADDRESS 0x080FFFFF
 #define FLASH_PAGE_SIZE               0x40000  // 256KB, F4 시리즈에 따라 다를 수 있음
 //#define USER_DATA_FLASH_ADDRESS      (USER_FLASH_LAST_PAGE_ADDRESS + 1 - FLASH_PAGE_SIZE)
@@ -173,6 +182,8 @@ unsigned char 잔량[1]
 */
 
 void Write_Flash(){
+
+	startTick = HAL_GetTick();
 	DisplayPage(LCD_LOADING_PAGE);
 	unsigned char ucData[1024]={};
 
@@ -322,6 +333,8 @@ void Write_Flash(){
 
 	HAL_FLASH_Lock();
 	Read_Flash();
+	endTick = HAL_GetTick(); // 기능 실행 후 타임스탬프 캡처
+	duration = endTick - startTick; // 실행 시간(밀리초 단위)
 }
 
 void Read_Flash(){

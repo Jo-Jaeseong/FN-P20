@@ -8,12 +8,30 @@
 #ifndef SRC_PERIPHERAL_VACCUM_SENSOR_H_
 #define SRC_PERIPHERAL_VACCUM_SENSOR_H_
 
+extern int Pressure;
+extern float Pressure2;
+
+typedef struct {
+    float torrValue;
+    int adcValue;
+} SensorData;
+
+extern SensorData dataPoint1, dataPoint2;
+
+extern float torrValue1, torrValue2;
+extern int data1,data2;
+
+extern float m, b; // 선형 변환을 위한 변수들
+
+extern int HighMeasureFlag, LowMeasureFlag;
+
 void InitADC();
 void GetValue();
-void DisplayAvgValue();
-void DisplayAvgPressure();
+void ValueFilter();
+uint32_t movingAverageFilter(uint32_t *samples, uint8_t sampleCount);
+void saveSensorDataAtTorrValue(SensorData *dataPoint, float torrValue);
+void calculateLinearTransformation(float data1Point1, float torrPoint1, float data1Point2, float torrPoint2, float* m, float* b);
+float convertData1ToTorr(float data1, float m, float b);
 
-void arrInsert(int *ar, int idx, int Iar);
-void arrAppend(int *ar, float Iar);
 
 #endif /* SRC_PERIPHERAL_VACCUM_SENSOR_H_ */

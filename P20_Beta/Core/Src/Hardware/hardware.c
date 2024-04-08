@@ -8,11 +8,6 @@
 #include "main.h"
 #include "hardware.h"
 
-int DoorHeater_flag, AC2_flag, ChamberBackHeater_flag, VaporizerHeater_flag, AC5_flag, VacuumPump_flag, Plasma_flag, AC8_flag;	//AC
-int CirculationHeater_flag;	//AC5_flag 할당
-int VacuumValve_flag, DC2_flag, DC3_flag, VentValve_flag, InjectionValve_flag, DoorLatch_flag, Fan_flag, ChamberHeater_flag, PeristalticPump_flag;	//DC
-int CirculationValve_flag, InhalationValve_flag;	//DC2_flag, DC3_flag 할당
-
 //DC
 void DC1(int onoff){
 	if(onoff==1){
