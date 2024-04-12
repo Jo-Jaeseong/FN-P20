@@ -5,35 +5,38 @@
  *      Author: CBT
  */
 
-#include "process.h"
 #include "main.h"
+#include "peripheral.h"
 #include "hardware.h"
 #include "sensor.h"
+#include <stdbool.h>
+
+bool TESTVAL;
 
 extern TIM_HandleTypeDef htim4;
 #define PERI_PWM	&htim4
 #define PERI_PWM_CH	TIM_CHANNEL_3
 
-
+int perispeed[3];
 
 void TurnOnPeristalticPump(void){
 	// PeristalticPump On.
-
-	if(LevelSensor1Check()){
+	if(LevelSensor2Check()){
 
 	}
 	else{
 		HAL_TIM_PWM_Start(PERI_PWM, PERI_PWM_CH);  //startup PeristalticPumpPwm
 		HAL_GPIO_WritePin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin, GPIO_PIN_SET);
+		TESTVAL=HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin);
 	}
 }
 
 void TurnOffPeristalticPump(void){
-	//HAL_TIM_PWM_Stop(PERI_PWM, PERI_PWM_CH);  //Stop PeristalticPumpPwm
+	HAL_TIM_PWM_Stop(PERI_PWM, PERI_PWM_CH);  //Stop PeristalticPumpPwm
 	HAL_GPIO_WritePin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin, GPIO_PIN_RESET);
+	TESTVAL=HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin);
 
 }
-
 
 void PeristalticSpeed(){	// 분당 분사량 조절
 	TIM5->CNT=0;

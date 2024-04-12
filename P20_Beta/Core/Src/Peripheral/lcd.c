@@ -6,18 +6,17 @@
  */
 #include <externflash.h>
 #include <string.h>
+#include <stdio.h>
 #include "main.h"
 
 #include "hardware.h"
 #include "sensor.h"
 #include "peripheral.h"
 
+#define SHORT		1
+#define STANDARD	2
+#define ADVANCED	3
 
-extern int flashtest;
-
-
-
-extern uint32_t adcData[5];
 
 extern UART_HandleTypeDef huart1;
 extern RTC_HandleTypeDef hrtc;
@@ -28,97 +27,31 @@ const unsigned char rtc_setting[13] = {0x5A, 0xA5, 0x0a, 0x80, 0x1f, 0x5a, 0x19,
 const unsigned char rtc_date_get[6] = {0x5A, 0xA5, 0x03, 0x81, 0x20, 0x03};
 const unsigned char rtc_time_get[6] = {0x5A, 0xA5, 0x03, 0x81, 0x24, 0x03};
 
-extern unsigned char UART_Receive_Flag;
-
-extern unsigned char Running_Flag;
 
 unsigned char   main_page[7] = {0x5A, 0xA5, 0x04, 0x80, 0x03, 0x00, 0x0a};
 unsigned char	LCD_rx_data[30]={};
 
-extern int TestMode;
-extern int TestCompleteflag;
-int current_page=0;
-int before_page=0;
-extern int HeaterControlMode;
-extern int TestTempErrorValue;
+int currentpage=0;
+int beforepage=0;
 
-int TestVacuumValue=10;
-int TestLeakValue=2;
-
-extern int autoprint;
-
-
+unsigned char beforeday;
 
 //extern char RFIDData[4]; //확인 필요
-extern struct RFID_format RFIDData;
 
-extern int checkret;
-int ret1;
 extern int tempcnt;
 
 
-
-struct Process_data_format	CycleData[7][21];
-
-
-unsigned int TotalTime;
-unsigned int fProcessTime[7];
-unsigned int CycleTime=0;
-unsigned int EndTime=0;
-unsigned int ProcessTime[7]={};
-unsigned int StepTime[21]={};
 extern unsigned char CurrentProcess, CurrentStep;
 
-#define SHORT		1
-#define STANDARD	2
-#define ADVANCED	3
-
-int CycleName=SHORT;
-int ProcessNum,StepNum;
-int testbit;
-
-extern float Temperature[5];
-
-extern int DoorSettingTemp[3], ChamberSettingTemp[3], ChamberBackSettingTemp[3], VaporizerSettingTemp[3];
 float FlashSettingTemp[4][3]={};
 
 extern int PreesureCondition[3];
 int FlashPreesureCondition[3]={};
 
-
-extern int PlasmaTime[2];
-int FlashPlasmaTime[2];
-
-extern int CalibrationTemp[4];
-extern float CalibrationVacuum;
-
-
 struct date_format today_date;
-extern struct data_format p_data;
-
-extern unsigned char flash_MODEL_NAME[10];
-extern unsigned char flash_SERIAL_NUMBER[10];
-extern unsigned char flash_DEPARTMENT_NAME[10];
-extern unsigned char flash_FACILITY_NAME[10];
-extern unsigned char flash_HARDWARE_VERSION[10];
-extern unsigned char flash_SOFTWARE_VERSION[10];
-extern unsigned char flash_LANGUAGE[10];
-
-
-extern unsigned char flash_sterilant_production_year[3],flash_sterilant_production_month[3],flash_sterilant_production_day[3];
-extern unsigned char flash_sterilant_production_number[3];
-extern unsigned char flash_sterilant_open_year[3], flash_sterilant_open_month[3], flash_sterilant_open_day[3];
-extern unsigned char flash_sterilant_volume[3];
-
-extern unsigned char flash_ID[5][10];
-extern unsigned char flash_PW[5][10];
-extern unsigned char flashuserCount;
 
 
 unsigned int inputyear, inputmonth, inputday;
-
-int Select_ID;
-extern unsigned int CurrentUser;
 
 extern unsigned char loadflash_ID[10];
 extern unsigned char flash_load_index;
@@ -152,7 +85,7 @@ void DisplayFirstPage(){
 void DisplayPage(int page){
 	main_page[6] = page;
 	if(page!=LCD_LOADING_PAGE)
-		current_page=page;
+		currentpage=page;
     HAL_UART_Transmit(LCD_USART, main_page, 7, 10);
 }
 
@@ -611,6 +544,183 @@ void LCD_Function_Process(int index, int value){
     }
 }
 
+void DoActionButton(int key){	//00xx
+    switch(key) {
+    	case 0:
+            break;
+        case 1: // goto login page
+        	DisplayPage(LCD_LOGIN_PAGE);
+        	Display02page();
+
+
+        	//fortest
+/*
+        	DisplayPage(LCD_MONITOR_PAGE);
+        	PressureData[0]=750;
+        	TemperatureData[0]=50;
+        	for(int i=1;i<=270;i++){
+        		TemperatureData[i]=i;
+        		if(TemperatureData[i]>=80){
+        			TemperatureData[i]=80;
+        		}
+        		PressureData[i]=650;
+        	}
+        	DisplayInitTempGraph();
+        	DisplayInitVacuumGraph();
+
+        	DisplayTempGraph(270-1,0);
+        	DisplayVacuumGraph(270-1,1);
+*/
+			//DisplayVacuumGraph(200,1);
+        	//DisplayVacuumGraph(10,1);
+
+
+        	//DisplayDot(0x40,0x00,1,1);
+
+        	/*
+        	for(int i=0;i<300;i++){
+        		DisplayDot(0x40,0x00,130+i,130+i);
+        	}
+        	*/
+        	//DisplayDot(0x40,0x00,300,300);
+
+            break;
+        case 2:	//LOGIN BUTTON
+        	DisplayPage(LCD_HOME_PAGE);
+        	Display05page();
+        	break;
+
+        case 0x11:
+        	DisplayPage(LCD_INFO_INFORMATION_PAGE);
+        	Display21page();
+        	break;
+        case 0x12:
+        	DisplayPage(LCD_INFO_STERILANT_PAGE);
+        	Display22page();
+        	break;
+        case 0x13:
+        	DisplayPage(LCD_INFO_HISTORY_PAGE);
+        	inputyear=0;
+        	inputmonth=0;
+        	inputday=0;
+        	DisplayPageValue(0x23,0xB0,inputyear);
+        	DisplayPageValue(0x23,0xB5,inputmonth);
+        	DisplayPageValue(0x23,0xB9,inputday);
+        	DisplaySelectIcon(1,0);
+			DisplaySelectIcon(2,0);
+			DisplaySelectIcon(3,0);
+			DisplaySelectIcon(4,0);
+			DisplaySelectIcon(5,0);
+
+        	Display23page();
+        	break;
+        case 0x21:
+        	DisplayPage(LCD_USER_SETTING_PAGE);
+        	Display24page();
+        	break;
+        case 0x22:
+        	TestCompleteFlag=0;
+        	Display25page();
+        	DisplayTime(0x25,0x50,(60*10+15)*100);
+        	break;
+        case 0x23:
+        	TestCompleteFlag=0;
+        	Display26page();
+        	break;
+        case 0x24:
+        	TestCompleteFlag=0;
+        	Display27page();
+			break;
+
+        case 0x31:
+        	DisplayPage(LCD_ADMIN_PMSCHEDULE_PAGE);
+        	Display28page();
+        	break;
+        case 0x32:
+			DisplayPage(LCD_ADMIN_PARTSTEST_PAGE);
+			DisplayRFIDNumber();
+			VacuumPump(0);
+			InjectionValve(0);
+			VacuumValve(0);
+			VentValve(0);
+			Plasma(0);
+        	//다른 화면으로 이동할때 초기화 추가해야함
+			//중요
+			break;
+
+
+        case 0x41:
+        	Display30page();
+        	DisplayPage(LCD_FACTORY_INFOSETTING_PAGE);
+        	break;
+        case 0x42:
+            Display31page();
+        	break;
+
+        case 0x43:
+        	DisplayPage(LCD_FACTORY_TESTMODE_PAGE);
+        	break;
+
+
+        case 0x44:	//LCD_FACTORY_TEMPSETTING_PAGE
+        	//여기
+        	Read_Flash();
+        	DisplayTempValues();
+        	Display33page();
+        	break;
+
+
+
+        case 0x45:
+        	Display34page();
+        	DisplayPage(LCD_FACTORY_TESTMODE_PROCESSSETTINGS1_PAGE);
+        	CycleName=SHORT;
+        	ProcessNum=1;
+        	StepNum=1;
+        	Read_Flash();
+        	DisplayProcessSettingValues();
+        	break;
+
+        case 0x46:
+        	DisplayPage(LCD_FACTORY_TESTMODE_PROCESSTEST1_PAGE);
+        	CycleName=SHORT;
+        	ProcessNum=1;
+        	StepNum=1;
+        	CurrentProcess=1;
+        	CurrentStep=1;
+        	Read_Flash();
+        	ReadProcessTime();
+        	ReadCycleTime();
+        	ReadStepTime();
+        	DisplayProcessTestValues();
+        	break;
+
+        case 0x47:
+        	Inithardware();
+        	HeaterControlMode=0;
+        	//DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
+        	//여기 테스트중
+        	DisplayPage(60);
+
+        	break;
+
+        case 0x99:
+        	DisplayPage(LCD_FACTORY_TESTMODE_PAGE);
+        	Inithardware();
+        	HeaterControlMode=1;
+        	break;
+
+        case 0xFF:	//도어 오픈
+        	if(Running_Flag==0){
+        		DoorOpenFlag=1;
+        	}
+        	break;
+
+
+    }
+    HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
+}
+
 void LCD_02(int index, int value){	//
 	switch(index) {
 		case 0x00 :
@@ -938,15 +1048,21 @@ void LCD_08(int index, int value){	//input Value
 				case 0x02 :
 					//START BUTTON
 					//알람 관련 체크 후  Start
+
 					if(Before_CycleAlarm_Check()==0){
 						Start();
 						DisplayPage(LCD_RUNNING_PAGE);
 					}
 					else{
-						Alarm_Check();
-						DisplayPage(LCD_STANDBY_ALRAM_PAGE);
+						if(AlarmCheckFlag){
+							Alarm_Check();
+							DisplayPage(LCD_STANDBY_ALRAM_PAGE);
+						}
+						else{
+							Start();
+							DisplayPage(LCD_RUNNING_PAGE);
+						}
 					}
-
 					break;
 			}
 			break;
@@ -959,7 +1075,7 @@ void LCD_09(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					//MONITOR
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_MONITOR_PAGE);
 					Display11page();
 		        	DisplayInitTempGraph();
@@ -999,7 +1115,7 @@ void LCD_11(int index, int value){	//input Value
 		case 0x00 :
 			switch(value) {
 				case 0x01 :
-					DisplayPage(before_page);
+					DisplayPage(beforepage);
 					break;
 			}
 			break;
@@ -1012,7 +1128,7 @@ void LCD_12(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					//Monitor
-					before_page=current_page;
+					beforepage=currentpage;
 		        	DisplayPage(LCD_MONITOR_PAGE);
 		        	Display11page();
 		        	DisplayInitTempGraph();
@@ -1057,7 +1173,7 @@ void LCD_14(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					//Moniter
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_MONITOR_PAGE);
 					Display11page();
 		        	DisplayInitTempGraph();
@@ -1088,17 +1204,15 @@ void LCD_22(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 		        	InitRFID();
-		        	ret1=ReadRFID();
 		        	DisplayRFIDNumber();
-		        	if(ret1==1){
-		        		rfid_callback();
+		        	if(ReadRFID()==1){
 		        		Write_Flash();
-		        		DisplayPage(current_page);
+		        		DisplayPage(currentpage);
 		        	}
 					break;
 
 				case 0x03 :
-					if((int)flash_sterilant_production_year[RFIDData.currentID]==0){
+					if(RFIDData.production_year==0){
 
 					}
 					else{
@@ -1215,23 +1329,58 @@ void LCD_24(int index, int value){	//input Value
 		case 0x00 :
 			switch(value) {
 				case 0x01 :
-					//토글
-					if(autoprint==1){
-						autoprint=0;
+					if(AlarmCheckFlag==1){
+						AlarmCheckFlag=0;
 					}
 					else{
-						autoprint=1;
+						AlarmCheckFlag=1;
 					}
+					DisplayIcon(0x24,0x10,AlarmCheckFlag);
 					break;
 				case 0x02 :
-					//
+					if(ErrorCheckFlag==1){
+						ErrorCheckFlag=0;
+					}
+					else{
+						ErrorCheckFlag=1;
+					}
+					DisplayIcon(0x24,0x20,ErrorCheckFlag);
 					break;
 				case 0x03 :
-					//
+					if(reservationFlag==1){
+						reservationFlag=0;
+					}
+					else{
+						reservationFlag=1;
+					}
+					DisplayIcon(0x24,0x30,reservationFlag);
+					break;
+				case 0x04 :
+					if(autoprintFlag==1){
+						autoprintFlag=0;
+					}
+					else{
+						autoprintFlag=1;
+					}
+					DisplayIcon(0x24,0x40,autoprintFlag);
+					break;
+				case 0x06 :
+					if(printgraphFlag==1){
+						printgraphFlag=0;
+					}
+					else{
+						printgraphFlag=1;
+					}
+					DisplayIcon(0x24,0x60,printgraphFlag);
 					break;
 			}
 			break;
+		case 0x50 : // PrintCopy
+			printcopy=value;
+			break;
     }
+    Write_Flash();
+    DisplayPage(LCD_USER_SETTING_PAGE);
     Display24page();
 }
 
@@ -1241,6 +1390,7 @@ void LCD_25(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					TestModeStart(1);
+					DisplayPage(59);
 					break;
 				case 0x02 :
 					if(TestMode==1){
@@ -1248,15 +1398,13 @@ void LCD_25(int index, int value){	//input Value
 					}
 					break;
 				case 0x03 :
-					if(TestCompleteflag==1){
+					if(TestCompleteFlag==1){
 						PrintLeakTest();
 					}
 					break;
 			}
 			break;
     }
-    Display25page();
-
 }
 void LCD_26(int index, int value){	//input Value
     switch(index) {
@@ -1270,18 +1418,8 @@ void LCD_26(int index, int value){	//input Value
 					DisplayPage4Char(0x26,0x1C,"TEST");
 					DisplayPage4Char(0x26,0x20,"TEST");
 					break;
-				case 0x02 :
-					if(TestMode==2){
-						TestModeStop(2);
-						DisplayPage4Char(0x26,0x10,"");
-						DisplayPage4Char(0x26,0x14,"");
-						DisplayPage4Char(0x26,0x18,"");
-						DisplayPage4Char(0x26,0x1C,"");
-						DisplayPage4Char(0x26,0x20,"");
-					}
-					break;
 				case 0x03 :
-					if(TestCompleteflag==1){
+					if(TestCompleteFlag==1){
 						PrintHeaterTest();
 					}
 					break;
@@ -1299,13 +1437,8 @@ void LCD_27(int index, int value){	//input Value
 				case 0x01 :
 					TestModeStart(3);
 					break;
-				case 0x02 :
-					if(TestMode==3){
-						TestModeStop(3);
-					}
-					break;
 				case 0x03 :
-					if(TestCompleteflag==1){
+					if(TestCompleteFlag==1){
 						PrintPartsTest();
 					}
 					break;
@@ -1321,66 +1454,57 @@ void LCD_28(int index, int value){	//input Value
 		case 0x00 :
 			switch(value) {
 				case 0x01 :
-					tempCarbonFilter=CarbonFilterMax;
-					DisplayPageValue(0x28,0x40,tempCarbonFilter);
+					CarbonFilter=CarbonFilterMax;
 					break;
 				case 0x02 :
-					tempHEPAFilter=HEPAFilterMax;
-					DisplayPageValue(0x28,0x50,tempHEPAFilter);
+					HEPAFilter=HEPAFilterMax;
 					break;
 				case 0x03 :
-					tempPlasmaAssy=PlasmaAssyMax;
-					DisplayPageValue(0x28,0x60,tempPlasmaAssy);
-					break;
-				case 0x99 :
-					CarbonFilterMax=tempCarbonFilterMax;
-					HEPAFilterMax=tempHEPAFilterMax;
-					PlasmaAssyMax=tempPlasmaAssyMax;
-					CarbonFilter=tempCarbonFilter;
-					HEPAFilter=tempHEPAFilter;
-					PlasmaAssy=tempPlasmaAssy;
-					Write_Flash();
-					Display28page();
-					DisplayPage(current_page);
+					PlasmaAssy=PlasmaAssyMax;
 					break;
 			}
 			break;
-
 		case 0x10 :
-			tempCarbonFilterMax=value;
-			DisplayPageValue(0x28,0x10,tempCarbonFilterMax);
+			CarbonFilterMax=value;
+			if(CarbonFilterMax<CarbonFilter){
+				CarbonFilter=CarbonFilterMax;
+			}
 			break;
 		case 0x20 :
-			tempHEPAFilterMax=value;
-			DisplayPageValue(0x28,0x20,tempHEPAFilterMax);
+			HEPAFilterMax=value;
+			if(HEPAFilterMax<HEPAFilter){
+				HEPAFilter=HEPAFilterMax;
+			}
 			break;
 		case 0x30 :
-			tempPlasmaAssyMax=value;
-			DisplayPageValue(0x28,0x30,tempPlasmaAssyMax);
+			PlasmaAssyMax=value;
+			if(PlasmaAssyMax<PlasmaAssy){
+				PlasmaAssy=PlasmaAssyMax;
+			}
 			break;
 
 		case 0x40 :
-			tempCarbonFilter=value;
-			if(tempCarbonFilterMax<tempCarbonFilter){
-				tempCarbonFilter=tempCarbonFilterMax;
+			CarbonFilter=value;
+			if(CarbonFilterMax<CarbonFilter){
+				CarbonFilter=CarbonFilterMax;
 			}
-			DisplayPageValue(0x28,0x40,tempCarbonFilter);
 			break;
 		case 0x50 :
-			tempHEPAFilter=value;
-			if(tempHEPAFilterMax<tempHEPAFilter){
-				tempHEPAFilter=tempHEPAFilterMax;
+			HEPAFilter=value;
+			if(HEPAFilterMax<HEPAFilter){
+				HEPAFilter=HEPAFilterMax;
 			}
-			DisplayPageValue(0x28,0x50,tempHEPAFilter);
 			break;
 		case 0x60 :
-			tempPlasmaAssy=value;
-			if(tempPlasmaAssyMax<tempPlasmaAssy){
-				tempPlasmaAssy=tempPlasmaAssyMax;
+			PlasmaAssy=value;
+			if(PlasmaAssyMax<PlasmaAssy){
+				PlasmaAssy=PlasmaAssyMax;
 			}
-			DisplayPageValue(0x28,0x60,tempPlasmaAssy);
 			break;
     }
+	Write_Flash();
+	Display28page();
+	DisplayPage(currentpage);
 }
 
 void LCD_29(int index, int value){
@@ -1402,77 +1526,61 @@ void LCD_29(int index, int value){
 					break;
 			}
 			break;
-		case 0x01 : // TestValue
-			TestVacuumValue=value/10;
-			break;
-		case 0x05 : // 리크 률
-			TestLeakValue=value/10;
-			break;
-		case 0x09 : // 에러 온도 률
-			TestTempErrorValue=value;
-			break;
     }
-    //Display30page();
 }
 
 void LCD_30(int index, int value){	//input Value
     switch(index) {
 		case 0x00 :
 			switch(value) {
-				case 0x90 :
-					W25Q16_EraseSector(0);
-					W25Q16_EraseSector(4096*1);
-					W25Q16_EraseSector(4096*2);
-					W25Q16_EraseSector(4096*3);
-					W25Q16_EraseSector(4096*4);
-					W25Q16_EraseSector(4096*5);
-					break;
-				case 0x99 :
+				case 0x01 :
 					ReadInforDataFromLCD();
-					Write_Flash();
-					DisplayPage(current_page);
 					break;
 			}
 			break;
 		case 0x01 : // TestValue
-			TestVacuumValue=value/10;
+			TestVacuumValue=value;
 			break;
 		case 0x05 : // 리크 률
-			TestLeakValue=value/10;
+			TestLeakValue=value;
 			break;
 		case 0x09 : // 에러 온도 률
 			TestTempErrorValue=value;
 			break;
+		case 0x10 : //
+			SterilantCheckDay=value;
+			break;
+		case 0x14 : //
+			DoorOpenPressure=value;
+			break;
     }
+	Write_Flash();
+	DisplayPage(currentpage);
     //Display30page();
 }
 
 void LCD_31(int index, int value){	//input Value
     switch(index) {
 		case 0x00 :
-			switch(value) {
-				case 0x99 :
-					Write_Flash();
-					break;
-			}
 			break;
 		case 0x21 :
-			CalibrationTemp[0]=value/10;
+			CalibrationTemp[0]=value;
 			break;
 		case 0x25 :
-			CalibrationTemp[1]=value/10;
+			CalibrationTemp[1]=value;
 			break;
 		case 0x29 :
-			CalibrationTemp[2]=value/10;
+			CalibrationTemp[2]=value;
 			break;
 		case 0x2D :
-			CalibrationTemp[3]=value/10;
+			CalibrationTemp[3]=value;
 			break;
 		case 0x35 :
-			CalibrationVacuum=(float)value/10;
+			CalibrationVacuum=value;
 			break;
 
     }
+    Write_Flash();
     Display31page();
 
 }
@@ -1529,13 +1637,6 @@ void LCD_33(int index, int value){	//input Value
 			break;
     	case 0x49 : // Pressure condition3
     		FlashPreesureCondition[2]=(float)value/10;
-			break;
-
-    	case 0x51 : // Plasma on time
-    		FlashPlasmaTime[0]=(float)value;
-			break;
-    	case 0x55 : // Plasma off time
-    		FlashPlasmaTime[1]=(float)value;
 			break;
     }
     //DisplayProcessSettingValues();
@@ -1697,7 +1798,7 @@ void LCD_34(int index, int value){	//input Value
 					break;
 				case 0x50 :	//Cycle 선택 팝업
 					Display44page();
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_FACTORY_TESTMODE_SELECT_CYCLE_PAGE);
 					break;
 				case 0x51:
@@ -1707,7 +1808,6 @@ void LCD_34(int index, int value){	//input Value
 					break;
 
 		        case 0x55:
-					//testbit=CycleData[ProcessNum][StepNum].PartsSetting;
 		        	//센서 세팅 값에서 저장된 값 저장시
 		        	if(FlashSettingTemp[0][0]!=0){
 						for(int i=0;i<3;i++){
@@ -1722,13 +1822,9 @@ void LCD_34(int index, int value){	//input Value
 		        		PreesureCondition[1]=FlashPreesureCondition[1];
 		        		PreesureCondition[2]=FlashPreesureCondition[2];
 		        	}
-		        	if(FlashPlasmaTime[0]!=0){
-		        		PlasmaTime[0]=FlashPlasmaTime[0];
-		        		PlasmaTime[1]=FlashPlasmaTime[1];
-		        	}
 		        	Write_Flash();
 		        	DisplayProcessSettingValues();
-		        	DisplayPage(current_page);
+		        	DisplayPage(currentpage);
 					break;
 			}
 			break;
@@ -1751,7 +1847,7 @@ void LCD_35(int index, int value){	//input Value
 			switch(value) {
 				case 0x50 : // Cycle 선택
 					Display44page();
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_FACTORY_TESTMODE_SELECT_CYCLE_PAGE);
 					break;
 				case 0x51:
@@ -1760,7 +1856,6 @@ void LCD_35(int index, int value){	//input Value
 					Display34page();
 		        	break;
 		        case 0x55:
-					//testbit=CycleData[ProcessNum][StepNum].PartsSetting;
 		        	//센서 세팅 값에서 저장된 값 저장시
 		        	if(FlashSettingTemp[0][0]!=0){
 						for(int i=0;i<3;i++){
@@ -1775,13 +1870,9 @@ void LCD_35(int index, int value){	//input Value
 		        		PreesureCondition[1]=FlashPreesureCondition[1];
 		        		PreesureCondition[2]=FlashPreesureCondition[2];
 		        	}
-		        	if(FlashPlasmaTime[0]!=0){
-		        		PlasmaTime[0]=FlashPlasmaTime[0];
-		        		PlasmaTime[1]=FlashPlasmaTime[1];
-		        	}
 		        	Write_Flash();
 		        	DisplayProcessSettingValues();
-		        	DisplayPage(current_page);
+		        	DisplayPage(currentpage);
 					break;
 			}
 			break;
@@ -1797,7 +1888,7 @@ void LCD_36(int index, int value){	//input Value
 			switch(value) {
 				case 0x50 : // Cycle 선택
 					Display44page();
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_FACTORY_TESTMODE_SELECT_CYCLE_PAGE);
 					break;
 				case 0x51:
@@ -1827,7 +1918,7 @@ void LCD_37(int index, int value){	//input Value
 			switch(value) {
 				case 0x50 : // Cycle 선택
 					Display44page();
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_FACTORY_TESTMODE_SELECT_CYCLE_PAGE);
 					break;
 				case 0x51:
@@ -1858,7 +1949,7 @@ void LCD_38(int index, int value){	//input Value
 			switch(value) {
 				case 0x50 : // Cycle 선택
 					Display44page();
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_FACTORY_TESTMODE_SELECT_CYCLE_PAGE);
 					break;
 		        case 0x55:	//TEST STOP
@@ -1883,7 +1974,7 @@ void LCD_39(int index, int value){	//input Value
 			switch(value) {
 				case 0x50 : // Cycle 선택
 					Display44page();
-					before_page=current_page;
+					beforepage=currentpage;
 					DisplayPage(LCD_FACTORY_TESTMODE_SELECT_CYCLE_PAGE);
 					break;
 		        case 0x55:	//TEST STOP
@@ -1917,7 +2008,7 @@ void LCD_44(int index, int value){	//input Value
 		        	ReadProcessTime();
 		        	ReadCycleTime();
 		        	ReadStepTime();
-		        	DisplayPage(before_page);
+		        	DisplayPage(beforepage);
 					Display34page();
 					break;
 				case 0x02 : // Cycle 선택
@@ -1930,7 +2021,7 @@ void LCD_44(int index, int value){	//input Value
 		        	ReadProcessTime();
 		        	ReadCycleTime();
 		        	ReadStepTime();
-					DisplayPage(before_page);
+					DisplayPage(beforepage);
 					Display34page();
 					break;
 				case 0x03 : // Cycle 선택
@@ -1943,7 +2034,7 @@ void LCD_44(int index, int value){	//input Value
 		        	ReadProcessTime();
 		        	ReadCycleTime();
 		        	ReadStepTime();
-					DisplayPage(before_page);
+					DisplayPage(beforepage);
 					Display34page();
 					break;
 			}
@@ -1970,6 +2061,8 @@ void LCD_60(int index, int value){	//input Value
 						AC1(1);
 		        		//DisplayIcon(0x6A,0x10,1);
 					}
+					//SaveSettingData(&myProcessData);
+					SaveCycleData();
 					break;
 				case 0x02 ://not used
 					if(!HAL_GPIO_ReadPin(GPIO_OUT12_GPIO_Port, GPIO_OUT12_Pin)){
@@ -1980,6 +2073,7 @@ void LCD_60(int index, int value){	//input Value
 						AC2(1);
 		        		//DisplayIcon(0x6A,0x20,1);
 					}
+					//LoadSettingData(&myProcessData);
 					break;
 				case 0x03 :
 					if(!HAL_GPIO_ReadPin(GPIO_OUT13_GPIO_Port, GPIO_OUT13_Pin)){
@@ -2016,11 +2110,17 @@ void LCD_60(int index, int value){	//input Value
 						//AC6(0);
 						VacuumPump(0);
 		        		//DisplayIcon(0x6A,0x60,0);
+						if(currentpage==LCD_ADMIN_PARTSTEST_PAGE){
+							Fan(0);
+						}
 					}
 					else{
 						//AC6(1);
 						VacuumPump(1);
 		        		//DisplayIcon(0x6A,0x60,1);
+						if(currentpage==LCD_ADMIN_PARTSTEST_PAGE){
+							Fan(1);
+						}
 					}
 					break;
 				case 0x07 :	//Plasma
@@ -2118,35 +2218,33 @@ void LCD_60(int index, int value){	//input Value
 				case 0x10 :
 					if(HAL_GPIO_ReadPin(GPIO_OUT8_GPIO_Port, GPIO_OUT8_Pin)){
 						DC8(0);
-		        		//DisplayIcon(0x6B,0x80,0);
+
 					}
 					else{
 						DC8(1);
-		        		//DisplayIcon(0x6B,0x80,1);
+
 					}
 					break;
 				case 0x11 :
 					if(HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin)){
-						//페리펌프
-		        		//DisplayIcon(0x6B,0x90,0);
+						PeriPump(0);
 					}
 					else{
-						//페리펌프
-		        		//DisplayIcon(0x6B,0x90,1);
+						PeriPump(1);
 					}
 					break;
 				case 0x12 :
 		        	InitRFID();
-		        	ret1=ReadRFID();
 		        	DisplayRFIDNumber();
-		        	if(ret1==1){
-		        		rfid_callback();
-		        		Write_Flash();
+		        	if(ReadRFID()==1){
+		        		//Write_Flash();
 		        	}
-		        	DisplayPage(current_page);
+		        	DisplayPage(currentpage);
 		        	break;
 				case 0x13 :
 		        	DisplayPage(LCD_FACTORY_VACUUM_CALIBRATION_PAGE);
+		        	DisplayPageValue(0x62, 0x11, vacuumsplope*1000);
+		        	DisplayPageValue(0x62, 0x15, vacuumintercept*10);
 		        	break;
 			}
 			break;
@@ -2166,206 +2264,31 @@ void LCD_62(int index, int value){	//LCD_FACTORY_VACUUM_CALIBRATION_PAGE
 		        	DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
 					break;
 				case 0x02 :
-					//m,b 저장
-					//로딩 불러오면서
-					//예정
-					DisplayPageValue(0x62, 0x11, m*1000);
-					DisplayPageValue(0x62, 0x15, b*10);
+					DisplayPageValue(0x62, 0x11, vacuumsplope*1000);
+					DisplayPageValue(0x62, 0x15, vacuumintercept*10);
 		        	DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
 					break;
 				}
+			break;
 		case 0x01 : // Set Chamber Temp	//대기
 			torrValue1=(float)value/10;
 			saveSensorDataAtTorrValue(&dataPoint1, torrValue1);
 			DisplayPageValue(0x62, 0x09, dataPoint1.adcValue);
-			calculateLinearTransformation(dataPoint1.adcValue,dataPoint1.torrValue,dataPoint2.adcValue,dataPoint2.torrValue, &m, &b);
-			DisplayPageValue(0x62, 0x11, m*1000);
-			DisplayPageValue(0x62, 0x15, b*10);
+			calculateLinearTransformation(dataPoint1.adcValue,dataPoint1.torrValue,dataPoint2.adcValue,dataPoint2.torrValue, &vacuumsplope, &vacuumintercept);
+			DisplayPageValue(0x62, 0x11, vacuumsplope*1000);
+			DisplayPageValue(0x62, 0x15, vacuumintercept*10);
 			break;
 		case 0x05 : // Set Chamber Temp	//대기
 			torrValue2=(float)value/10;
 			saveSensorDataAtTorrValue(&dataPoint2, torrValue2);
 			DisplayPageValue(0x62, 0x0D, dataPoint2.adcValue);
-			calculateLinearTransformation(dataPoint1.adcValue,dataPoint1.torrValue,dataPoint2.adcValue,dataPoint2.torrValue, &m, &b);
-			DisplayPageValue(0x62, 0x11, m*1000);
-			DisplayPageValue(0x62, 0x15, b*10);
+			calculateLinearTransformation(dataPoint1.adcValue,dataPoint1.torrValue,dataPoint2.adcValue,dataPoint2.torrValue, &vacuumsplope, &vacuumintercept);
+			DisplayPageValue(0x62, 0x11, vacuumsplope*1000);
+			DisplayPageValue(0x62, 0x15, vacuumintercept*10);
 			break;
 	}
 }
 
-
-void DoActionButton(int key){	//00xx
-    switch(key) {
-    	case 0:
-            break;
-        case 1: // goto login page
-        	DisplayPage(LCD_LOGIN_PAGE);
-        	Display02page();
-        	//fortest
-/*
-        	DisplayPage(LCD_MONITOR_PAGE);
-        	PressureData[0]=750;
-        	TemperatureData[0]=50;
-        	for(int i=1;i<=270;i++){
-        		TemperatureData[i]=i;
-        		if(TemperatureData[i]>=80){
-        			TemperatureData[i]=80;
-        		}
-        		PressureData[i]=650;
-        	}
-        	DisplayInitTempGraph();
-        	DisplayInitVacuumGraph();
-
-        	DisplayTempGraph(270-1,0);
-        	DisplayVacuumGraph(270-1,1);
-*/
-			//DisplayVacuumGraph(200,1);
-        	//DisplayVacuumGraph(10,1);
-
-
-        	//DisplayDot(0x40,0x00,1,1);
-
-        	/*
-        	for(int i=0;i<300;i++){
-        		DisplayDot(0x40,0x00,130+i,130+i);
-        	}
-        	*/
-        	//DisplayDot(0x40,0x00,300,300);
-
-            break;
-        case 2:	//LOGIN BUTTON
-        	DisplayPage(LCD_HOME_PAGE);
-        	break;
-
-        case 0x11:
-        	DisplayPage(LCD_INFO_INFORMATION_PAGE);
-        	Display21page();
-        	break;
-        case 0x12:
-        	DisplayPage(LCD_INFO_STERILANT_PAGE);
-        	Display22page();
-        	break;
-        case 0x13:
-        	DisplayPage(LCD_INFO_HISTORY_PAGE);
-        	inputyear=0;
-        	inputmonth=0;
-        	inputday=0;
-        	DisplayPageValue(0x23,0xB0,inputyear);
-        	DisplayPageValue(0x23,0xB5,inputmonth);
-        	DisplayPageValue(0x23,0xB9,inputday);
-        	DisplaySelectIcon(1,0);
-			DisplaySelectIcon(2,0);
-			DisplaySelectIcon(3,0);
-			DisplaySelectIcon(4,0);
-			DisplaySelectIcon(5,0);
-
-        	Display23page();
-        	break;
-        case 0x21:
-        	DisplayPage(LCD_USER_SETTING_PAGE);
-        	Display24page();
-        	break;
-        case 0x22:
-        	TestCompleteflag=0;
-        	Display25page();
-        	break;
-        case 0x23:
-        	TestCompleteflag=0;
-        	Display26page();
-        	break;
-        case 0x24:
-        	TestCompleteflag=0;
-        	Display27page();
-			break;
-
-        case 0x31:
-        	DisplayPage(LCD_ADMIN_PMSCHEDULE_PAGE);
-        	Display28page();
-        	break;
-        case 0x32:
-			DisplayPage(LCD_ADMIN_PARTSTEST_PAGE);
-			DisplayRFIDNumber();
-			VacuumPump(0);
-			InjectionValve(0);
-			VacuumValve(0);
-			VentValve(0);
-			Plasma(0);
-        	//다른 화면으로 이동할때 초기화 추가해야함
-			//중요
-			break;
-
-
-        case 0x41:
-        	Display30page();
-        	DisplayPage(LCD_FACTORY_INFOSETTING_PAGE);
-        	break;
-        case 0x42:
-            Display31page();
-        	break;
-
-        case 0x43:
-        	DisplayPage(LCD_FACTORY_TESTMODE_PAGE);
-        	break;
-
-
-        case 0x44:	//LCD_FACTORY_TEMPSETTING_PAGE
-        	//여기
-        	Read_Flash();
-        	DisplayTempValues();
-        	Display33page();
-        	break;
-
-
-
-        case 0x45:
-        	Display34page();
-        	DisplayPage(LCD_FACTORY_TESTMODE_PROCESSSETTINGS1_PAGE);
-        	CycleName=SHORT;
-        	ProcessNum=1;
-        	StepNum=1;
-        	Read_Flash();
-        	DisplayProcessSettingValues();
-        	break;
-
-        case 0x46:
-        	DisplayPage(LCD_FACTORY_TESTMODE_PROCESSTEST1_PAGE);
-        	CycleName=SHORT;
-        	ProcessNum=1;
-        	StepNum=1;
-        	CurrentProcess=1;
-        	CurrentStep=1;
-        	Read_Flash();
-        	ReadProcessTime();
-        	ReadCycleTime();
-        	ReadStepTime();
-        	DisplayProcessTestValues();
-        	break;
-
-        case 0x47:
-        	Inithardware();
-        	HeaterControlMode=0;
-        	//DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
-        	//여기 테스트중
-        	DisplayPage(60);
-
-        	break;
-
-        case 0x99:
-        	DisplayPage(LCD_FACTORY_TESTMODE_PAGE);
-        	Inithardware();
-        	HeaterControlMode=1;
-        	break;
-
-        case 0xFF:	//도어 오픈
-        	if(Running_Flag==0){
-        		DoorOpenFlag=1;
-        	}
-        	break;
-
-
-    }
-    HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
-}
 
 
 
@@ -2373,7 +2296,6 @@ void DoActionButton(int key){	//00xx
 void ProcessSettingButton(int key){	//03XX
     switch(key) {
         case 0x55:
-			//testbit=CycleData[ProcessNum][StepNum].PartsSetting;
         	//센서 세팅 값에서 저장된 값 저장시
         	if(FlashSettingTemp[0][0]!=0){
 				for(int i=0;i<3;i++){
@@ -2388,13 +2310,9 @@ void ProcessSettingButton(int key){	//03XX
         		PreesureCondition[1]=FlashPreesureCondition[1];
         		PreesureCondition[2]=FlashPreesureCondition[2];
         	}
-        	if(FlashPlasmaTime[0]!=0){
-        		PlasmaTime[0]=FlashPlasmaTime[0];
-        		PlasmaTime[1]=FlashPlasmaTime[1];
-        	}
         	Write_Flash();
         	DisplayProcessSettingValues();
-        	DisplayPage(current_page);
+        	DisplayPage(currentpage);
 			break;
         case 0x60:	//TEST START
         	ReadProcessTime();
@@ -2647,7 +2565,7 @@ unsigned char   steptime_index[11] = {0x00, first_steptime_index, first_steptime
 unsigned char   processtime_index[7] = {0x00, first_processtime_index, first_processtime_index+0x03,first_processtime_index+0x06, first_processtime_index+0x09, first_processtime_index+0x0c,
 								first_processtime_index+0x0f};
 void DisplayTimeValues(){
-	if(current_page==LCD_FACTORY_TESTMODE_PROCESSSETTINGS1_PAGE){
+	if(currentpage==LCD_FACTORY_TESTMODE_PROCESSSETTINGS1_PAGE){
 		DisplayTime(0x34,0x51,CycleData[ProcessNum][StepNum].Time*100);
 		for(int i=1;i<11;i++){
 			DisplayTime(0x34,steptime_index[i],CycleData[ProcessNum][i].Time*100);
@@ -2663,7 +2581,7 @@ void DisplayTimeValues(){
 		}
 		DisplayTime(0x34,0x89,CycleTime);
 	}
-	else if(current_page==LCD_FACTORY_TESTMODE_PROCESSSETTINGS2_PAGE){
+	else if(currentpage==LCD_FACTORY_TESTMODE_PROCESSSETTINGS2_PAGE){
 		DisplayTime(0x34,0x51,CycleData[ProcessNum][StepNum].Time*100);
 		for(int i=1;i<11;i++){
 			DisplayTime(0x34,steptime_index[i],CycleData[ProcessNum][i+10].Time*100);
@@ -2679,7 +2597,7 @@ void DisplayTimeValues(){
 		}
 		DisplayTime(0x34,0x89,CycleTime);
 	}
-	else if(current_page==LCD_FACTORY_TESTMODE_PROCESSTEST1_PAGE){
+	else if(currentpage==LCD_FACTORY_TESTMODE_PROCESSTEST1_PAGE){
 		for(int i=1;i<11;i++){	//step time display
 			DisplayTime(0x34,steptime_index[i],StepTime[i]);
 		}
@@ -2688,7 +2606,7 @@ void DisplayTimeValues(){
 		}
 		DisplayTime(0x34,0x89,CycleTime);
 	}
-	else if(current_page==LCD_FACTORY_TESTMODE_PROCESSTEST2_PAGE){
+	else if(currentpage==LCD_FACTORY_TESTMODE_PROCESSTEST2_PAGE){
 		for(int i=1;i<11;i++){	//step time display
 			DisplayTime(0x34,steptime_index[i],StepTime[i+10]);
 		}
@@ -2697,7 +2615,7 @@ void DisplayTimeValues(){
 		}
 		DisplayTime(0x34,0x89,CycleTime);
 	}
-	else if(current_page==LCD_FACTORY_TESTMODE_PROCESSTEST3_PAGE){
+	else if(currentpage==LCD_FACTORY_TESTMODE_PROCESSTEST3_PAGE){
 		for(int i=1;i<11;i++){	//step time display
 			DisplayTime(0x34,steptime_index[i],StepTime[i]);
 		}
@@ -2706,7 +2624,7 @@ void DisplayTimeValues(){
 		}
 		DisplayTime(0x34,0x89,CycleTime);
 	}
-	else if(current_page==LCD_FACTORY_TESTMODE_PROCESSTEST4_PAGE){
+	else if(currentpage==LCD_FACTORY_TESTMODE_PROCESSTEST4_PAGE){
 		for(int i=1;i<11;i++){	//step time display
 			DisplayTime(0x34,steptime_index[i],StepTime[i+10]);
 		}
@@ -2741,8 +2659,6 @@ void ReadCycleTime(){
 	}
 
 }
-
-
 
 
 
@@ -2791,8 +2707,6 @@ void DisplayTempValues(){
 	DisplayPageValue(0x33,0x45,PreesureCondition[1]*10);
 	DisplayPageValue(0x33,0x49,PreesureCondition[2]*10);
 
-	DisplayPageValue(0x33,0x51,PlasmaTime[0]);
-	DisplayPageValue(0x33,0x55,PlasmaTime[1]);
 
 	for(int i=0;i<3;i++){
 		FlashSettingTemp[0][i]=DoorSettingTemp[i];
@@ -2804,14 +2718,11 @@ void DisplayTempValues(){
 	FlashPreesureCondition[1]=PreesureCondition[1];
 	FlashPreesureCondition[2]=PreesureCondition[2];
 
-	FlashPlasmaTime[0]=PlasmaTime[0];
-	FlashPlasmaTime[1]=PlasmaTime[1];
 }
 
 
 void DisplayVacuumSensor(){
-	Pressure *= .9;
-	Pressure += Pressure2*0.1;
+	DisplayPageValue(0x31,0x31,Pressure*10);
 	DisplayPageValue(0x60,0x11,Pressure*10);
 	DisplayPageValue(0x62,0x19,data1);
 	DisplayPageValue(0x62,0x1D,Pressure*10);
@@ -2882,7 +2793,7 @@ void Display10page(){
 void Display11page(){
 	DisplayPageValue(0x11,0x51,totalCount);
 	DisplayPageValue(0x11,0x55,dailyCount);
-	DisplayPageValue(0x11,0x20,flash_sterilant_volume[RFIDData.currentID]);
+	DisplayPageValue(0x11,0x20,RFIDData.volume);
 }
 void Display12page(){
 
@@ -2910,59 +2821,46 @@ void Display21page(){
 }
 
 void Display22page(){
-	if(flash_sterilant_open_year[RFIDData.currentID]==0){
+	if(RFIDData.open_year==0){
 		DisplayPageValue(0x22,0x10,0);
 		//RFIDData.open_year,RFIDData.open_month,RFIDData.open_day;
 		DisplayPage10Char(0x22,0x20,"");
 		DisplayPageValue(0x22,0x30,0);
 		DisplayPage10Char(0x22,0x40,"");
-		DisplayPage10Char(0x22,0x50,"00/50");
+		DisplayPage10Char(0x22,0x50,"");
 	}
 	else{
-		DisplayPageValue(0x22,0x10,flash_sterilant_volume[RFIDData.currentID]);
+		DisplayPageValue(0x22,0x10,RFIDData.volume);
 		char msg[10];
 		sprintf(msg,"20%2d-%02d-%02d",
-				(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+				RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 		DisplayPage10Char(0x22,0x20,msg);
 		GetTime();
-		int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+		int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 		RFIDData.elapsed_days=elapsed_days;
 
 		DisplayPageValue(0x22,0x30,30-elapsed_days);
 
 		//시리얼넘버
 		sprintf(msg,"%02d%02d%02d%02d  ",
-					(int)flash_sterilant_production_year[RFIDData.currentID],(int)flash_sterilant_production_month[RFIDData.currentID],(int)flash_sterilant_production_day[RFIDData.currentID], (int)flash_sterilant_production_number[RFIDData.currentID]);
+					RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
 		DisplayPage10Char(0x22,0x40,msg);
-		sprintf(msg,"%02d/50",flash_sterilant_volume[RFIDData.currentID]);
+		sprintf(msg,"%02dmL",RFIDData.volume);
 		DisplayPage10Char(0x22,0x50,msg);
 	}
 }
 
 void Display24page(){
 	//프린트 토글
-	DisplayIcon(0x24,0x01,autoprint);
-	DisplayIcon(0x24,0x02,1);
-	DisplayIcon(0x24,0x03,1);
+	DisplayIcon(0x24,0x10,AlarmCheckFlag);
+	DisplayIcon(0x24,0x20,ErrorCheckFlag);
+	DisplayIcon(0x24,0x30,0);
+	DisplayIcon(0x24,0x40,autoprintFlag);
+	DisplayPageValue(0x24,0x50,printcopy);
+	DisplayIcon(0x24,0x60,printgraphFlag);
 }
 
 void Display23page(){
-
-/*
-	extern unsigned char loadflash_ID[10];
-	extern unsigned char flash_load_index;
-	extern struct data_format load_data;
-	extern float loadPressureData[300];
-	extern float loadTemperatureData[300];
-
-	int cyclename;
-	unsigned char year, month, day;
-	unsigned char start_hour, start_minute, start_second;
-	unsigned char end_hour, end_minute, end_second;
-	float	tempmax[7],pressuremax[7],pressuremin[7];
-	int status;
-*/
-
 	if(load_data.cyclename==1){
 		DisplayPage10Char(0x23,0x10,"  SHORT   ");
 	}
@@ -3092,9 +2990,10 @@ void Display23page(){
 
 
 void Display25page(){
-	if(TestCompleteflag==0){
-		DisplayPageValue(0x25,0x01,TestVacuumValue*10);
-		DisplayPageValue(0x25,0x05,TestLeakValue*10);
+	if(TestCompleteFlag==0){
+		DisplayTime(0x25,0x50,EndTestTimeCounter);// 여기수정 요망
+		DisplayPageValue(0x25,0x01,TestVacuumValue);
+		DisplayPageValue(0x25,0x05,TestLeakValue);
 
 		DisplayPageValue(0x25,0x10,0);
 		DisplayPageValue(0x25,0x14,0);
@@ -3127,7 +3026,7 @@ void Display25page(){
 
 
 void Display26page(){
-	if(TestCompleteflag==0){
+	if(TestCompleteFlag==0){
 		DisplayPage4Char(0x26,0x10,"");
 		DisplayPage4Char(0x26,0x14,"");
 		DisplayPage4Char(0x26,0x18,"");
@@ -3153,7 +3052,7 @@ void Display26page(){
 }
 
 void Display27page(){
-	if(TestCompleteflag==0){
+	if(TestCompleteFlag==0){
 		DisplayPage4Char(0x27,0x20,"");
 		DisplayPage4Char(0x27,0x24,"");
 		DisplayPage4Char(0x27,0x28,"");
@@ -3172,12 +3071,6 @@ void Display27page(){
 }
 
 void Display28page(){
-	tempCarbonFilterMax=CarbonFilterMax;
-	tempHEPAFilterMax=HEPAFilterMax;
-	tempPlasmaAssyMax=PlasmaAssyMax;
-	tempCarbonFilter=CarbonFilter;
-	tempHEPAFilter=HEPAFilter;
-	tempPlasmaAssy=PlasmaAssy;
 	DisplayPageValue(0x28,0x10,CarbonFilterMax);
 	DisplayPageValue(0x28,0x20,HEPAFilterMax);
 	DisplayPageValue(0x28,0x30,PlasmaAssyMax);
@@ -3191,9 +3084,11 @@ void Display28page(){
 
 //30 페이지
 void Display30page(){
-	DisplayPageValue(0x30,0x01,TestVacuumValue*10);
-	DisplayPageValue(0x30,0x05,TestLeakValue*10);
+	DisplayPageValue(0x30,0x01,TestVacuumValue);
+	DisplayPageValue(0x30,0x05,TestLeakValue);
 	DisplayPageValue(0x30,0x09,TestTempErrorValue);
+	DisplayPageValue(0x30,0x10,SterilantCheckDay);
+	DisplayPageValue(0x30,0x14,DoorOpenPressure);
 
 	DisplayPage10Char(0x30,0x30,flash_MODEL_NAME);
 	DisplayPage10Char(0x30,0x40,flash_SERIAL_NUMBER);
@@ -3227,11 +3122,11 @@ void Display31page(){
 
 
 
-	DisplayPageValue(0x31,0x21,CalibrationTemp[0]*10);
-	DisplayPageValue(0x31,0x25,CalibrationTemp[1]*10);
-	DisplayPageValue(0x31,0x29,CalibrationTemp[2]*10);
-	DisplayPageValue(0x31,0x2D,CalibrationTemp[3]*10);
-	DisplayPageValue(0x31,0x35,CalibrationVacuum*10);
+	DisplayPageValue(0x31,0x21,CalibrationTemp[0]);
+	DisplayPageValue(0x31,0x25,CalibrationTemp[1]);
+	DisplayPageValue(0x31,0x29,CalibrationTemp[2]);
+	DisplayPageValue(0x31,0x2D,CalibrationTemp[3]);
+	DisplayPageValue(0x31,0x35,CalibrationVacuum);
 
 }
 void Display33page(){
@@ -3256,9 +3151,6 @@ void Display33page(){
 	DisplayPageValue(0x33,0x45,PreesureCondition[1]*10);
 	DisplayPageValue(0x33,0x49,PreesureCondition[2]*10);
 
-	DisplayPageValue(0x33,0x51,PlasmaTime[0]);
-	DisplayPageValue(0x33,0x55,PlasmaTime[1]);
-
 	for(int i=0;i<3;i++){
 		FlashSettingTemp[0][i]=DoorSettingTemp[i];
 		FlashSettingTemp[1][i]=ChamberSettingTemp[i];
@@ -3269,8 +3161,6 @@ void Display33page(){
 	FlashPreesureCondition[1]=PreesureCondition[1];
 	FlashPreesureCondition[2]=PreesureCondition[2];
 
-	FlashPlasmaTime[0]=PlasmaTime[0];
-	FlashPlasmaTime[1]=PlasmaTime[1];
 }
 
 void Display34page(){
@@ -3370,7 +3260,7 @@ void DisplayPage8Char(int page ,int index, char *msg){
     HAL_UART_Transmit(LCD_USART, PageChar, 14, 10);
 }
 
-void DisplayPage10Char(int page ,int index, unsigned char *msg){
+void DisplayPage10Char(int page ,int index, char *msg){
 	unsigned char   PageChar[16] = {0x5A, 0xA5, 0x0d, 0x82, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	PageChar[2]=13; //주소1+주소2+Data	lenth
 	PageChar[4]=page;
@@ -3388,7 +3278,7 @@ void DisplayPage10Char(int page ,int index, unsigned char *msg){
     HAL_UART_Transmit(LCD_USART, PageChar, 16, 10);
 }
 
-void DisplayPage20Char(int page ,int index, unsigned char *msg){
+void DisplayPage20Char(int page ,int index, char *msg){
 	unsigned char   PageChar[16] = {0x5A, 0xA5, 0x0d, 0x82, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	PageChar[2]=23; //주소1+주소2+Data	lenth
 	PageChar[4]=page;
@@ -3431,9 +3321,13 @@ void DisplayMsg(int page ,int index, char *msg){
 }
 
 void GetTime(void){
+	beforeday=today_date.day;
 	unsigned char week;
 	ReadRTC( &today_date.year, &today_date.month, &today_date.day, &week,
 			&today_date.hour, &today_date.minute, &today_date.second);
+	if(!is_same(today_date.day,beforeday,1)){
+		dailyCount=0;
+	}
 }
 
 void DisplayTemprature(){
@@ -3463,6 +3357,7 @@ void DisplayIcons(){
 	DisplayIcon(0x6B,0x70,HAL_GPIO_ReadPin(GPIO_OUT7_GPIO_Port, GPIO_OUT7_Pin));
 	DisplayIcon(0x6B,0x80,HAL_GPIO_ReadPin(GPIO_OUT8_GPIO_Port, GPIO_OUT8_Pin));
 	DisplayIcon(0x6B,0x90,HAL_GPIO_ReadPin(GPIO_OUT26_GPIO_Port, GPIO_OUT26_Pin));
+
 
 	DisplayIcon(0x6C,0x10,DoorHandleCheck());
 	DisplayIcon(0x6C,0x20,DoorLatchCheck());

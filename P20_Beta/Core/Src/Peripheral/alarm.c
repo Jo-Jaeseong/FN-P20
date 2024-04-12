@@ -33,22 +33,16 @@
 
 */
 
-
-extern struct date_format today_date;
-extern unsigned char flash_sterilant_open_year[3], flash_sterilant_open_month[3], flash_sterilant_open_day[3];
-extern struct RFID_format RFIDData;
-
-extern float Temperature[5];
-extern int DoorSettingTemp[3], ChamberSettingTemp[3], ChamberBackSettingTemp[3], VaporizerSettingTemp[3];
-extern int TestTempErrorValue;
-
 extern int checkret;
 int Alarmcode=0;
 unsigned char devicealarm[15]={};
 
+
+int ErrorCheckFlag;
+int AlarmCheckFlag;
+
 int Before_CycleAlarm_Check(){
 	//장비 차단 전원 관련 확인
-	//
 
 	if(DoorLatchCheck()){
 		devicealarm[2]=0;
@@ -89,7 +83,7 @@ int Before_CycleAlarm_Check(){
 	}
 	//멸균제 장착 기간 확인
 	if((60-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),
-			(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]))>0){
+			RFIDData.production_year,RFIDData.open_month,RFIDData.open_day))>0){
 		devicealarm[7]=0;
 	}
 	else{
@@ -149,6 +143,7 @@ int Before_CycleAlarm_Check(){
 		devicealarm[0]+=devicealarm[i];
 	}
 	return devicealarm[0];
+
 }
 
 void Sterilant_Check(){
@@ -184,7 +179,7 @@ void Sterilant_Check(){
 	}
 	//멸균제 장착 기간 확인
 	if((60-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),
-			(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]))>0){
+			flash_sterilant_open_year,RFIDData.open_month,RFIDData.open_day))>0){
 		devicealarm[7]=0;
 	}
 	else{
@@ -296,4 +291,177 @@ void Alarm_Check(){
 		DisplayMsg(0x07,0x30,msg);
 	}
 
+}
+
+void DeviceErrorProcess(){
+	//여기
+	/*
+	에러1	공정 취소	공정 중 취소 버튼 누름
+	에러2	챔버 온도 도달 안됨	챔버 설정 온도 도달 안됨
+	에러3	압력1 도달 안됨	압력1 설정 시간내 도달 안됨
+	에러4	압력2 도달 안됨	압력2 설정 시간내 도달 안됨
+	에러5	기화기 히터 온도 확인	기화기 온도 설정 시간내 도달 안됨 (V3P2까지 온도 확인)
+	에러6	멸균제1 감지 안됨	멸균제1 부족 및 공급 불량
+	에러7	멸균제 주입 후 압력 도달 안됨	멸균제 주입 불량 및 압력 센서 문제
+	에러8	압력3 도달 안됨	압력3 설정 시간내 도달 안됨
+	에러9	멸균제2 감지 안됨	멸균제2 부족 및 공급 불량
+	에러10	멸균제 주입 후 압력 도달 안됨	멸균제 주입 불량 및 압력 센서 문제
+	 */
+	ErrorCheck();
+	if(deviceerror[0]!=0){
+		if(StopFlag==0){
+			if(Select_NORMAL_MODE==1){
+				if(deviceerror[1]==1){
+					//취소
+					DisplayPage8Char(0x13,0x01,"ERROR01");
+					DisplayPage8Char(0x12,0x01,"ERROR01");
+					DisplayPage4Char(0x14,0x10,"01  ");
+					errorcode=1;
+				}
+				else if(deviceerror[2]==1){
+					//전구간 체크 온도 도달 안됨
+					DisplayPage8Char(0x13,0x01,"ERROR02");
+					DisplayPage8Char(0x12,0x01,"ERROR02");
+					DisplayPage4Char(0x14,0x10,"02  ");
+					errorcode=2;
+				}
+				else if(deviceerror[3]==1){
+					//에러3 압력1 도달 안됨
+					DisplayPage8Char(0x13,0x01,"ERROR03");
+					DisplayPage8Char(0x12,0x01,"ERROR03");
+					DisplayPage4Char(0x14,0x10,"03  ");
+					errorcode=3;
+				}
+				else if(deviceerror[4]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR04");
+					DisplayPage8Char(0x12,0x01,"ERROR04");
+					DisplayPage4Char(0x14,0x10,"04  ");
+					errorcode=4;
+				}
+				else if(deviceerror[5]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR05");
+					DisplayPage8Char(0x12,0x01,"ERROR05");
+					DisplayPage4Char(0x14,0x10,"05  ");
+					errorcode=5;
+
+				}
+				else if(deviceerror[6]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR06");
+					DisplayPage8Char(0x12,0x01,"ERROR06");
+					DisplayPage4Char(0x14,0x10,"06  ");
+					errorcode=6;
+				}
+				else if(deviceerror[7]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR07");
+					DisplayPage8Char(0x12,0x01,"ERROR07");
+					DisplayPage4Char(0x14,0x10,"07  ");
+					errorcode=7;
+				}
+				else if(deviceerror[8]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR08");
+					DisplayPage8Char(0x12,0x01,"ERROR08");
+					DisplayPage4Char(0x14,0x10,"08  ");
+					errorcode=8;
+				}
+				else if(deviceerror[9]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR09");
+					DisplayPage8Char(0x12,0x01,"ERROR09");
+					DisplayPage4Char(0x14,0x10,"09  ");
+					errorcode=9;
+				}
+				else if(deviceerror[10]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR10");
+					DisplayPage8Char(0x12,0x01,"ERROR10");
+					DisplayPage4Char(0x14,0x10,"10  ");
+					errorcode=10;
+				}
+				else{
+
+				}
+				if(ErrorCheckFlag){
+					DisplayPage(LCD_EORROR_POPUP_PAGE);
+					ErrorEndProcess();
+					deviceerror[0]=0;
+					StopFlag=1;
+				}
+			}
+			else{
+				if(deviceerror[1]==1){
+					//취소
+					DisplayPage8Char(0x13,0x01,"ERROR01");
+					DisplayPage8Char(0x12,0x01,"ERROR01");
+					errorcode=1;
+				}
+				else if(deviceerror[2]==1){
+					//전구간 체크 온도 도달 안됨
+					DisplayPage8Char(0x13,0x01,"ERROR02");
+					DisplayPage8Char(0x12,0x01,"ERROR02");
+					errorcode=2;
+				}
+				else if(deviceerror[3]==1){
+					//에러3 압력1 도달 안됨
+					DisplayPage8Char(0x13,0x01,"ERROR03");
+					DisplayPage8Char(0x12,0x01,"ERROR03");
+					errorcode=3;
+				}
+				else if(deviceerror[4]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR04");
+					DisplayPage8Char(0x12,0x01,"ERROR04");
+					errorcode=4;
+				}
+				else if(deviceerror[5]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR05");
+					DisplayPage8Char(0x12,0x01,"ERROR05");
+					errorcode=5;
+
+				}
+				else if(deviceerror[6]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR06");
+					DisplayPage8Char(0x12,0x01,"ERROR06");
+					errorcode=6;
+				}
+				else if(deviceerror[7]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR07");
+					DisplayPage8Char(0x12,0x01,"ERROR07");
+					errorcode=7;
+				}
+				else if(deviceerror[8]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR08");
+					DisplayPage8Char(0x12,0x01,"ERROR08");
+					errorcode=8;
+				}
+				else if(deviceerror[9]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR09");
+					DisplayPage8Char(0x12,0x01,"ERROR09");
+					errorcode=9;
+				}
+				else if(deviceerror[10]==1){
+					DisplayPage8Char(0x13,0x01,"ERROR10");
+					DisplayPage8Char(0x12,0x01,"ERROR10");
+					errorcode=10;
+				}
+				else{
+
+				}
+				//테스트
+				if(ErrorCheckFlag){
+					ErrorEndProcess();
+					deviceerror[0]=0;
+					StopFlag=1;
+				}
+
+			}
+		}
+	}
+
+}
+
+void ErrorCheck(){
+	if(Running_Flag==1){
+		if(StopFlag==0){
+			for(int i=1;i<10;i++){
+				deviceerror[0]+=deviceerror[i];
+			}
+		}
+	}
 }

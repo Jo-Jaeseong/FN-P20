@@ -16,10 +16,6 @@
 #include "process.h"
 #include "flash.h"
 
-
-extern unsigned char	LCD_rx_data[30];
-extern unsigned char UART_Receive_Flag;
-
 extern UART_HandleTypeDef huart1;
 #define LCD_USART	&huart1
 
@@ -31,8 +27,6 @@ char inputCreateID[10];
 char inputCreatePW[10];
 char inputCreatePW2[10];
 
-extern unsigned char flash_ID[5][10];
-extern unsigned char flash_PW[5][10];
 
 unsigned char master_ID[10]="CBT";
 unsigned char master_PW[10]="1234";
@@ -43,11 +37,9 @@ char inputloginPW[10];
 char inputManagementPW[10];
 char inputManagementPW2[10];
 
-extern unsigned char flashuserCount;
 
 unsigned int CurrentUser;
-
-extern int Select_ID;
+int Select_ID;
 
 //아이디 생성
 int createUser() {

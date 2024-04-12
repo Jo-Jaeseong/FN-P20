@@ -63,18 +63,19 @@
 #define LCD_FACTORY_VACUUM_CALIBRATION_PAGE				62
 #define LCD_LOADING_PAGE								90
 
-struct Process_data_format {
-	unsigned int PartsSetting;
-	unsigned int	Time;
-};
+extern int currentpage;
+extern int beforepage;
+
+extern unsigned char beforeday;
 
 struct date_format {
 	unsigned char year, month, day;
 	unsigned char hour, minute, second;
 };
 
+extern struct date_format today_date;
 
-
+extern unsigned char LCD_rx_data[30];
 
 void InitLCD();
 void DisplayFirstPage();
@@ -184,8 +185,8 @@ void Display44page();
 void DisplayPageValue(int page ,int index, int value);
 void DisplayPage4Char(int page ,int index, char *msg);
 void DisplayPage8Char(int page ,int index, char *msg);
-void DisplayPage10Char(int page ,int index, unsigned char *msg);
-void DisplayPage20Char(int page ,int index, unsigned char *msg);
+void DisplayPage10Char(int page ,int index, char *msg);
+void DisplayPage20Char(int page ,int index, char *msg);
 
 void DisplayMsg(int page ,int index, char *msg);
 

@@ -5,7 +5,6 @@
  *      Author: CBT
  */
 
-#include <externflash.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,13 +18,10 @@
 extern UART_HandleTypeDef huart2;
 #define PRINT_USART	&huart2
 
-extern struct date_format today_date;	//RFID 시간 데이터
-extern struct data_format p_data;	//프린트 데이터
-extern struct data_format load_data;
-extern struct RFID_format RFIDData;
 
-int autoprint=1;
-extern int CycleName;
+int autoprintFlag;
+int printcopy;
+int printgraphFlag;
 
 unsigned char PRINT_rx_data[200]={};
 //unsigned char PRINT_rx_data[3]={0x1b,0x0c,0x48};
@@ -40,16 +36,7 @@ unsigned char PRINT_rx_data[200]={};
 //ESC	@
 
 char pinrtdata[40];
-extern int Valveerror[3];
-extern int temperror[5];
-extern int Pressuererror[2];
-extern float TestPressure[10];
 
-extern float Temperature[5];
-extern int DoorSettingTemp[3], ChamberSettingTemp[3], ChamberBackSettingTemp[3], VaporizerSettingTemp[3];
-
-extern unsigned int fProcessTime[7];
-extern unsigned int TotalTime;
 extern int errorcode;
 
 extern unsigned int loadCarbonFilter;
@@ -62,23 +49,10 @@ extern unsigned int loaddailyCount;
 extern unsigned int loadTotalTime;
 extern unsigned int loadfProcessTime[7];
 
-extern unsigned char flash_sterilant_production_year[3],flash_sterilant_production_month[3],flash_sterilant_production_day[3];
-extern unsigned char flash_sterilant_production_number[3];
-extern unsigned char flash_sterilant_open_year[3], flash_sterilant_open_month[3], flash_sterilant_open_day[3];
-extern unsigned char flash_sterilant_volume[3];
 
 extern struct RFID_format loadRFIDData;
-extern unsigned char flash_ID[5][10];
-extern unsigned int CurrentUser;
 extern unsigned char loadflash_ID[10];
 
-extern unsigned char flash_MODEL_NAME[10];
-extern unsigned char flash_SERIAL_NUMBER[10];
-extern unsigned char flash_DEPARTMENT_NAME[10];
-extern unsigned char flash_FACILITY_NAME[10];
-extern unsigned char flash_HARDWARE_VERSION[10];
-extern unsigned char flash_SOFTWARE_VERSION[10];
-extern unsigned char flash_LANGUAGE[10];
 
 extern float PressureData[300];
 extern float TemperatureData[300];
@@ -160,15 +134,6 @@ void printmain(){
     print_printnfeed();
     doprint();
 }
-/*
-extern unsigned char flash_MODEL_NAME[10];
-extern unsigned char flash_SERIAL_NUMBER[10];
-extern unsigned char flash_FACILITY_NAME[10];
-extern unsigned char flash_DEPARTMENT_NAME[10];
-extern unsigned char flash_HARDWARE_VERSION[10];
-extern unsigned char flash_SOFTWARE_VERSION[10];
-extern unsigned char flash_LANGUAGE[10];
-*/
 
 
 void printInformation(){
@@ -208,16 +173,16 @@ void printInformation(){
 	printmsg(pinrtdata);
 
 	GetTime();
-	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 	if(elapsed_days<=0){
 		elapsed_days=0;
 	}
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  %02d\n",60-elapsed_days);
+	sprintf(pinrtdata,"Expiry Date   :  %02d\n",SterilantCheckDay-elapsed_days);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",flash_sterilant_volume[RFIDData.currentID]);
+	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",RFIDData.volume);
 	printmsg(pinrtdata);
 
 	printmsg("--------------------------------\n");
@@ -233,24 +198,24 @@ void printSterilant(){
 	printmsg("STERILANT Information           \n");
 	printmsg("--------------------------------\n");
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"SERIAL NO     :  %02d%02d%02d%02d\n",(int)flash_sterilant_production_year[RFIDData.currentID],(int)flash_sterilant_production_month[RFIDData.currentID],(int)flash_sterilant_production_day[RFIDData.currentID], (int)flash_sterilant_production_number[RFIDData.currentID]);
+	sprintf(pinrtdata,"SERIAL NO     :  %02d%02d%02d%02d\n",RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+	sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 	printmsg(pinrtdata);
 
 	GetTime();
-	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 	if(elapsed_days<=0){
 		elapsed_days=0;
 	}
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  %02d\n",60-elapsed_days);
+	sprintf(pinrtdata,"Expiry Date   :  %02d\n",SterilantCheckDay-elapsed_days);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",flash_sterilant_volume[RFIDData.currentID]);
+	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",RFIDData.volume);
 	printmsg(pinrtdata);
 
 	printmsg("--------------------------------\n");
@@ -463,7 +428,7 @@ void LoadCyclePrint(){
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  %02d\n",30-loadRFIDData.elapsed_days);
+	sprintf(pinrtdata,"Expiry Date   :  %02d\n",SterilantCheckDay-loadRFIDData.elapsed_days);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
@@ -772,24 +737,24 @@ void CyclePrint(){
 	printmsg("--------------------------------\n");
 	printmsg("Sterilant                       \n");
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"SERIAL NO    : %02d%02d%02d%02d\n",(int)flash_sterilant_production_year[RFIDData.currentID],(int)flash_sterilant_production_month[RFIDData.currentID],(int)flash_sterilant_production_day[RFIDData.currentID], (int)flash_sterilant_production_number[RFIDData.currentID]);
+	sprintf(pinrtdata,"SERIAL NO    : %02d%02d%02d%02d\n",RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Loading Date : 20%2d-%02d-%02d\n",(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+	sprintf(pinrtdata,"Loading Date : 20%2d-%02d-%02d\n",RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 	printmsg(pinrtdata);
 
 	GetTime();
-	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),(int)flash_sterilant_open_year[RFIDData.currentID],(int)flash_sterilant_open_month[RFIDData.currentID],(int)flash_sterilant_open_day[RFIDData.currentID]);
+	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
 	if(elapsed_days<=0){
 		elapsed_days=0;
 	}
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date  :  %02d\n",60-elapsed_days);
+	sprintf(pinrtdata,"Expiry Date  :  %02d\n",SterilantCheckDay-elapsed_days);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2  :  %02d\n",flash_sterilant_volume[RFIDData.currentID]);
+	sprintf(pinrtdata,"Remain H2O2  :  %02d\n",RFIDData.volume);
 	printmsg(pinrtdata);
 	printmsg("--------------------------------\n");
 	if(CycleName==1){
@@ -1059,10 +1024,16 @@ void CyclePrint(){
 	//flash_ID[CurrentUser][];
 	printmsg("Approved by   :                 \n");
 
-    print_printnfeed();
-    print_printnfeed();
-    doprint();
-    printtestgraph(CycleName);
+    if(printgraphFlag){
+        doprint();
+    	printtestgraph(CycleName);
+    }
+    else{
+        printmsg("--------------------------------\n");
+        print_printnfeed();
+        print_printnfeed();
+        doprint();
+    }
 }
 
 

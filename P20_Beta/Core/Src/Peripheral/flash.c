@@ -13,8 +13,9 @@
 
 #include "main.h"
 #include "hardware.h"
-#include "sensor.h"
 #include "peripheral.h"
+#include "sensor.h"
+
 
 
 __attribute__((__section__(".user_data"))) const char userConfig[1024];
@@ -27,37 +28,15 @@ endTick = HAL_GetTick(); // 기능 실행 후 타임스탬프 캡처
 duration = endTick - startTick; // 실행 시간(밀리초 단위)
 */
 
-
 #define USER_FLASH_LAST_PAGE_ADDRESS 0x080FFFFF
 #define FLASH_PAGE_SIZE               0x40000  // 256KB, F4 시리즈에 따라 다를 수 있음
 //#define USER_DATA_FLASH_ADDRESS      (USER_FLASH_LAST_PAGE_ADDRESS + 1 - FLASH_PAGE_SIZE)
 #define USER_DATA_FLASH_ADDRESS      0x08040000
 
 char userdata[1024];
-//extern struct data_format	CycleData[3][7][21];
-extern struct Process_data_format	CycleData[7][21];
-extern int CycleName;
 
-extern int DoorSettingTemp[3], ChamberSettingTemp[3], ChamberBackSettingTemp[3], VaporizerSettingTemp[3];
-extern int PreesureCondition[3];
-extern int PlasmaTime[2];
-
-extern int CalibrationTemp[4];
-extern float CalibrationVacuum;
-
-extern int TestVacuumValue;
-extern int TestLeakValue;
-extern int TestTempErrorValue;
-
-
-extern struct RFID_format RFIDData;
-extern struct date_format today_date;
-
-unsigned char flash_sterilant_production_year[3],flash_sterilant_production_month[3],flash_sterilant_production_day[3];
-unsigned char flash_sterilant_production_number[3];
-unsigned char flash_sterilant_open_year[3], flash_sterilant_open_month[3], flash_sterilant_open_day[3];
-unsigned char flash_sterilant_volume[3];
-
+//-----------------------------------------------------------------------------------------------------------------------//
+/*장비 정보*///(70)
 unsigned char flash_MODEL_NAME[10];
 unsigned char flash_SERIAL_NUMBER[10];
 unsigned char flash_DEPARTMENT_NAME[10];
@@ -66,9 +45,93 @@ unsigned char flash_HARDWARE_VERSION[10];
 unsigned char flash_SOFTWARE_VERSION[10];
 unsigned char flash_LANGUAGE[10];
 
+#define MODEL_NAME					0//char[10](문자입력)
+#define SERIAL_NUMBER				10//char[10](문자입력)
+#define DEPARTMENT_NAME				20//char[10](문자입력)
+#define FACILITY_NAME				30//char[10](문자입력)
+#define HARDWARE_VERSION			40//char[10](숫자입력)
+#define SOFTWARE_VERSION			50//char[10](숫자입력)
+#define FLASHLANGUAGE				60//char[10](숫자입력)
+
+//-----------------------------------------------------------------------------------------------------------------------//
+/*계정 정보*///(51)
 unsigned char flash_ID[5][10];
 unsigned char flash_PW[5][10];
 unsigned char flashuserCount;
+
+#define	FLASHID						70//char[5][10](숫자입력)70~119
+#define	FLASHPW						120//char[5][10](숫자입력)120~169
+#define	FLASHUSERCOUNT				170//char[1](숫자입력)
+
+//-----------------------------------------------------------------------------------------------------------------------//
+/*세팅*///(39)
+//기능 플래그 데이터
+#define ALARMCHECKFLAG_DATA			175//[1]
+#define ERRORCHECKFLAG_DATA			176//[1]
+#define RESERVATIONFLAG_DATA		177//[1]
+#define AUTOPRINTFLAG_DATA			178//[1]
+#define PRINTCOPY_DATA				179//[1]
+#define PRINTGRAPHFLAG_DATA			180//[1]
+
+//온도 세팅
+#define DOORSETTINGTEMP_DATA		181//[3]181~3
+#define CHAMBERSETTINGTEMP_DATA		184//[3]4~6
+#define CHAMBERBACKSETTINGTEMP_DATA	187//[3]7~9
+#define VAPORIZERSETTINGTEMP_DATA	190//[3]190~192
+
+//진공 조건 세팅
+#define PRESSURECONDITION_DATA		193//[3]13~15
+
+//페리 속도 세팅
+#define PERISPEED_DATA				196//[3]16~18
+
+//캘리브레이션
+#define CALIBRATIONTEMP_DATA		199//[4]19~22
+#define CALIBRATIONVACUUM_DATA		203//[1]203
+#define VACUUMSLOPE_DATA			204//[2]24~25	//소수점 단위 환산 필요(소수점 3쨰자리)
+#define VACUUMINTERCEPT_DATA		206//[2]26~27	//소수점 단위 환산 필요(정수 3자리+소수점 1자리)
+
+//셀프 테스트 오차
+#define TESTVACUUMVALUE_DATA		208//[1]
+#define TESTLEAKVALUE_DATA			209//[1]
+#define TESTTEMPERRORVALUE_DATA		210//[1]
+
+//과수 기한 설정
+#define STERILANTCHECKDAY_DATA		211//[1]
+
+//도어 오픈 압력 설정
+#define DOOROPENPRESSURE_DATA		212//[2] 3자리 정수
+
+
+//-----------------------------------------------------------------------------------------------------------------------//
+/*PM 정보*///(22)
+//사용 횟수 카운트
+#define	TOTALCOUNT_DATA				214//int[2](숫자입력)	//4자리 환산 필요
+#define	DAILYCOUNT_DATA				216//int[1](숫자입력)
+#define	BEFOREDAY_DATA				217//int[1](숫자입력)//beforeday
+
+//추후 변경 이름 _DATA로 통일
+#define PRODUCTION_YEAR_DATA		220//int[1]
+#define PRODUCTION_MONTH_DATA		221//int[1]
+#define PRODUCTION_DAY				222//int[1]
+#define PRODUCTION_NUMBER			223//int[1]
+#define OPEN_YEAR					224//int[1]
+#define OPEN_MONTH					225//int[1]
+#define OPEN_DAY					226//int[1]
+#define VOLUME						227//int[1]
+#define VOLUMEMAX					228//int[1]
+
+#define	CARBONFILTERMAX 			229//char[2](숫자입력)
+#define	HEPAFILTERMAX				231//char[2](숫자입력)
+#define	PLASMAASSYMAX				233//char[2](숫자입력)
+#define	CARBONFILTER				235//char[2](숫자입력)
+#define	HEPAFILTER					237//char[2](숫자입력)
+#define	PLASMAASSY					239//char[2](숫자입력)239~240
+//-----------------------------------------------------------------------------------------------------------------------//
+/*공정*///(720)
+#define CYCLEDATA1					280	//[240]
+#define CYCLEDATA2					520	//[240]
+#define CYCLEDATA3					760	//[240]
 
 #define	NONE				0x00
 #define	VACUUMVALVE			0x01
@@ -79,107 +142,8 @@ unsigned char flashuserCount;
 #define	PRESSURE1			0x20
 #define	PRESSURE2			0x40
 #define	PRESSURE3			0x60
+//-----------------------------------------------------------------------------------------------------------------------//
 
-#define CALIBRATIONVACUUM_DATA		0//int	[1]
-
-#define	DOORSETTINGTEMP_DATA		5//int [3]
-#define CHAMBERSETTINGTEMP_DATA		8//int [3]
-#define CHAMBERBACKSETTINGTEMP_DATA	11//int [3]
-#define VAPORIZERSETTINGTEMP_DATA	14//int [3]
-
-#define PRESSURECONDITION_DATA		17//int [3]
-#define	PLASMATIME_DATA				20//int [2]
-
-#define CALIBRATIONTEMP_DATA		22//int [4]
-
-
-#define TESTVACUUMVALUE_DATA		27//int	[1]
-#define TESTLEAKVALUE_DATA			28//int	[1]
-#define TESTTEMPERRORVALUE_DATA		29//int	[1]
-
-#define PRODUCTION_YEAR		32//char[1]
-#define PRODUCTION_MONTH	33//char[1]
-#define PRODUCTION_DAY		34//char[1]
-#define PRODUCTION_NUMBER	35//char[1]
-#define OPEN_YEAR			36//char[1]
-#define OPEN_MONTH			37//char[1]
-#define OPEN_DAY			38//char[1]
-#define VOLUME				39//char[1]
-
-//32~39
-//40~47
-//48~55
-
-#define MODEL_NAME			60//char[10](문자입력)
-#define SERIAL_NUMBER		70//char[10](문자입력)
-#define DEPARTMENT_NAME		80//char[10](문자입력)
-#define FACILITY_NAME		90//char[10](문자입력)
-#define HARDWARE_VERSION	100//char[10](숫자입력)
-#define SOFTWARE_VERSION	110//char[10](숫자입력)
-#define FLASHLANGUAGE		120//char[10](숫자입력)
-
-
-#define	CARBONFILTERMAX 	160//char[2](숫자입력)
-#define	HEPAFILTERMAX		162//char[2](숫자입력)
-#define	PLASMAASSYMAX		164//char[2](숫자입력)
-
-#define	CARBONFILTER		166//char[2](숫자입력)
-#define	HEPAFILTER			168//char[2](숫자입력)
-#define	PLASMAASSY			170//char[2](숫자입력)
-
-#define	TOTALCOUNT			172//char[2](숫자입력)
-#define	DAILYCOUNT			174//char[2](숫자입력)
-
-#define	FLASHUSERCOUNT		176//char[1](숫자입력)
-
-#define	FLASHID				180//char[5][10](숫자입력)
-#define	FLASHPW				230//char[5][10](숫자입력)
-
-#define CYCLEDATA1			280	//[240]
-#define CYCLEDATA2			520	//[240]
-#define CYCLEDATA3			760	//[240]
-
-
-
-/*
- *
-RFID 저장 형식
-unsigned char 생산년,월,일[3]
-unsigned char 생산 넘버[1]
-unsigned char 인식년,월,일[3]
-unsigned char 잔량[1]
-총[8]
-
-위 변수들을 20개 저장
-
-1.비교
- - RFID 읽을때 저장된 생산 년,월,일 비교
- - 그리고 생산 넘버 비교
-
-2. 값 처리
- - 이전값이 있으면 인식 년,월,일, 잔량 불러오기
- - 이전값이 없으면 인식 년,월,일, 잔량 부여 후 저장
-
-3. 사용 후 저장
- - 사용 후 1번으로 저장
- - 다른 용액통이 인식될 경우 2번에 저장...
- - 이런식으로 20번까지 저장 후
- - 새로운 용액이 인식 될 경우 1번 삭제후 2번을 1번으로 ....20번을 19번으로 저장
- - 새로운 용액은 20번에 저장.
- - 기존 인식된 용액통을 불러오고 저장할때는 해당 순서에 저장
- *
- *
- *
-순서
-1. 리드
- - RFID 리드
- - Flash 데이터 리드
-2. 비교
- - RFID 태그 데이터와 현재 저장 데이터 비교
-3. 저장
- - 없으면 기존 IndexRFIDFlash에 따라 저장
- - 있으면 기IndexRFIDFlash++
-*/
 
 void Write_Flash(){
 
@@ -187,57 +151,7 @@ void Write_Flash(){
 	DisplayPage(LCD_LOADING_PAGE);
 	unsigned char ucData[1024]={};
 
-	//ucData[CALIBRATIONVACUUM_DATA]=CalibrationVacuum;
-	float2char(CalibrationVacuum, ucData + CALIBRATIONVACUUM_DATA);
-
-	ucData[DOORSETTINGTEMP_DATA]=DoorSettingTemp[0];
-	ucData[DOORSETTINGTEMP_DATA+1]=DoorSettingTemp[1];
-	ucData[DOORSETTINGTEMP_DATA+2]=DoorSettingTemp[2];
-
-	ucData[CHAMBERSETTINGTEMP_DATA]=ChamberSettingTemp[0];
-	ucData[CHAMBERSETTINGTEMP_DATA+1]=ChamberSettingTemp[1];
-	ucData[CHAMBERSETTINGTEMP_DATA+2]=ChamberSettingTemp[2];
-
-	ucData[CHAMBERBACKSETTINGTEMP_DATA]=ChamberBackSettingTemp[0];
-	ucData[CHAMBERBACKSETTINGTEMP_DATA+1]=ChamberBackSettingTemp[1];
-	ucData[CHAMBERBACKSETTINGTEMP_DATA+2]=ChamberBackSettingTemp[2];
-
-	ucData[VAPORIZERSETTINGTEMP_DATA]=VaporizerSettingTemp[0];
-	ucData[VAPORIZERSETTINGTEMP_DATA+1]=VaporizerSettingTemp[1];
-	ucData[VAPORIZERSETTINGTEMP_DATA+2]=VaporizerSettingTemp[2];
-
-	ucData[PRESSURECONDITION_DATA]=PreesureCondition[0];
-	ucData[PRESSURECONDITION_DATA+1]=PreesureCondition[1];
-	ucData[PRESSURECONDITION_DATA+2]=PreesureCondition[2];
-
-	ucData[PLASMATIME_DATA]=PlasmaTime[0];
-	ucData[PLASMATIME_DATA+1]=PlasmaTime[1];
-
-	ucData[CALIBRATIONTEMP_DATA]=CalibrationTemp[0];
-	ucData[CALIBRATIONTEMP_DATA+1]=CalibrationTemp[1];
-	ucData[CALIBRATIONTEMP_DATA+2]=CalibrationTemp[2];
-	ucData[CALIBRATIONTEMP_DATA+3]=CalibrationTemp[3];
-
-
-	ucData[TESTVACUUMVALUE_DATA]=TestVacuumValue;
-	ucData[TESTLEAKVALUE_DATA]=TestLeakValue;
-	ucData[TESTTEMPERRORVALUE_DATA]=TestTempErrorValue;
-
-
-
-	for(int i=0;i<3;i++){
-		ucData[PRODUCTION_YEAR+8*i]=flash_sterilant_production_year[i];
-		ucData[PRODUCTION_MONTH+8*i]=flash_sterilant_production_month[i];
-		ucData[PRODUCTION_DAY+8*i]=flash_sterilant_production_day[i];
-		ucData[PRODUCTION_NUMBER+8*i]=flash_sterilant_production_number[i];
-
-		ucData[OPEN_YEAR+8*i]=flash_sterilant_open_year[i];
-		ucData[OPEN_MONTH+8*i]=flash_sterilant_open_month[i];
-		ucData[OPEN_DAY+8*i]=flash_sterilant_open_day[i];
-
-		ucData[VOLUME+8*i]=flash_sterilant_volume[i];
-	}
-
+	/*장비 정보*///(70)
 	for(int i=0;i<10;i++){
 		ucData[MODEL_NAME+i]=flash_MODEL_NAME[i];
 		ucData[SERIAL_NUMBER+i]=flash_SERIAL_NUMBER[i];
@@ -248,13 +162,98 @@ void Write_Flash(){
 		ucData[FLASHLANGUAGE+i]=flash_LANGUAGE[i];
 	}
 
+	/*계정 정보*///(51)
+	for(int j=0;j<5;j++){
+		for(int i=0;i<10;i++){
+			ucData[FLASHID+i+10*j]=flash_ID[j][i];
+			ucData[FLASHPW+i+10*j]=flash_PW[j][i];
+		}
+	}
+	ucData[FLASHUSERCOUNT]=flashuserCount;
+
+	/*세팅*///(39)
+	//기능 플래그 저장
+	ucData[ALARMCHECKFLAG_DATA]=AlarmCheckFlag;
+	ucData[ERRORCHECKFLAG_DATA]=ErrorCheckFlag;
+	ucData[RESERVATIONFLAG_DATA]=reservationFlag;
+	ucData[AUTOPRINTFLAG_DATA]=autoprintFlag;
+	ucData[PRINTCOPY_DATA]=printcopy;
+	ucData[PRINTGRAPHFLAG_DATA]=printgraphFlag;
+
+	//온도세팅 저장
+	ucData[DOORSETTINGTEMP_DATA]=DoorSettingTemp[0];
+	ucData[DOORSETTINGTEMP_DATA+1]=DoorSettingTemp[1];
+	ucData[DOORSETTINGTEMP_DATA+2]=DoorSettingTemp[2];
+	ucData[CHAMBERSETTINGTEMP_DATA]=ChamberSettingTemp[0];
+	ucData[CHAMBERSETTINGTEMP_DATA+1]=ChamberSettingTemp[1];
+	ucData[CHAMBERSETTINGTEMP_DATA+2]=ChamberSettingTemp[2];
+	ucData[CHAMBERBACKSETTINGTEMP_DATA]=ChamberBackSettingTemp[0];
+	ucData[CHAMBERBACKSETTINGTEMP_DATA+1]=ChamberBackSettingTemp[1];
+	ucData[CHAMBERBACKSETTINGTEMP_DATA+2]=ChamberBackSettingTemp[2];
+	ucData[VAPORIZERSETTINGTEMP_DATA]=VaporizerSettingTemp[0];
+	ucData[VAPORIZERSETTINGTEMP_DATA+1]=VaporizerSettingTemp[1];
+	ucData[VAPORIZERSETTINGTEMP_DATA+2]=VaporizerSettingTemp[2];
+
+	//진공조건 저장
+	ucData[PRESSURECONDITION_DATA]=PreesureCondition[0];
+	ucData[PRESSURECONDITION_DATA+1]=PreesureCondition[1];
+	ucData[PRESSURECONDITION_DATA+2]=PreesureCondition[2];
+
+	//페리 스피드 저장
+	ucData[PERISPEED_DATA]=perispeed[0];
+	ucData[PERISPEED_DATA+1]=perispeed[1];
+	ucData[PERISPEED_DATA+2]=perispeed[2];
+
+	//캘리브레이션 데이터 저장
+	ucData[CALIBRATIONTEMP_DATA]=CalibrationTemp[0];
+	ucData[CALIBRATIONTEMP_DATA+1]=CalibrationTemp[1];
+	ucData[CALIBRATIONTEMP_DATA+2]=CalibrationTemp[2];
+	ucData[CALIBRATIONTEMP_DATA+3]=CalibrationTemp[3];
+	ucData[CALIBRATIONVACUUM_DATA]=CalibrationVacuum;
+
+	ucData[VACUUMSLOPE_DATA]=(int)(vacuumsplope*1000)/100;
+	ucData[VACUUMSLOPE_DATA+1]=(int)(vacuumsplope*1000)%100;
+	ucData[VACUUMINTERCEPT_DATA]=(int)(-(vacuumintercept*10)/100);
+	ucData[VACUUMINTERCEPT_DATA+1]=(-((int)(vacuumintercept*10))%100);
+
+	//셀프 테스트 벨류 및 오차 저장
+	ucData[TESTVACUUMVALUE_DATA]=TestVacuumValue;
+	ucData[TESTLEAKVALUE_DATA]=TestLeakValue;
+	ucData[TESTTEMPERRORVALUE_DATA]=TestTempErrorValue;
+
+	//과수 기한 설정
+	ucData[STERILANTCHECKDAY_DATA]=SterilantCheckDay;
+	ucData[DOOROPENPRESSURE_DATA]=(int)(DoorOpenPressure/100);
+
+	//도어 오픈 압력 설정
+	ucData[DOOROPENPRESSURE_DATA+1]=(int)(DoorOpenPressure%100);
+
+
+	/*PM 정보*///(22)
+	//사용 횟수 카운트
+	ucData[TOTALCOUNT_DATA]=(int)(totalCount/100);
+	ucData[TOTALCOUNT_DATA+1]=(int)(totalCount%100);
+	ucData[DAILYCOUNT_DATA]=dailyCount;
+	ucData[BEFOREDAY_DATA]=beforeday;
+
+	//멸균제 데이터 저장
+	ucData[PRODUCTION_YEAR_DATA]=RFIDData.production_year;
+	ucData[PRODUCTION_MONTH_DATA]=RFIDData.production_month;
+	ucData[PRODUCTION_DAY]=RFIDData.production_day;
+	ucData[PRODUCTION_NUMBER]=RFIDData.production_number;
+	ucData[OPEN_YEAR]=RFIDData.open_year;
+	ucData[OPEN_MONTH]=RFIDData.open_month;
+	ucData[OPEN_DAY]=RFIDData.open_day;
+	ucData[VOLUME]=RFIDData.volume;
+	ucData[VOLUMEMAX]=RFIDData.volumemax;
+
+	//필터, 플라즈마 데이터 저장
 	ucData[CARBONFILTERMAX]=(int)(CarbonFilterMax/100);
 	ucData[CARBONFILTERMAX+1]=(int)(CarbonFilterMax%100);
 	ucData[HEPAFILTERMAX]=(int)(HEPAFilterMax/100);
 	ucData[HEPAFILTERMAX+1]=(int)(HEPAFilterMax%100);
 	ucData[PLASMAASSYMAX]=(int)(PlasmaAssyMax/100);
 	ucData[PLASMAASSYMAX+1]=(int)(PlasmaAssyMax%100);
-
 	ucData[CARBONFILTER]=(int)(CarbonFilter/100);
 	ucData[CARBONFILTER+1]=(int)(CarbonFilter%100);
 	ucData[HEPAFILTER]=(int)(HEPAFilter/100);
@@ -262,22 +261,9 @@ void Write_Flash(){
 	ucData[PLASMAASSY]=(int)(PlasmaAssy/100);
 	ucData[PLASMAASSY+1]=(int)(PlasmaAssy%100);
 
-	ucData[TOTALCOUNT]=(int)(totalCount/100);
-	ucData[TOTALCOUNT+1]=(int)(totalCount%100);
-	ucData[DAILYCOUNT]=dailyCount;
-	//ucData[DAILYCOUNT+1]=(int)(dailyCount%100);
 
-	ucData[FLASHUSERCOUNT]=flashuserCount;
-
-	for(int j=0;j<5;j++){
-		for(int i=0;i<10;i++){
-			ucData[FLASHID+i+10*j]=flash_ID[j][i];
-			ucData[FLASHPW+i+10*j]=flash_PW[j][i];
-		}
-	}
-
+	/*공정*///(720)
 	int j=0;
-
 	j=CYCLEDATA1;
 	for(int i2=1;i2<7;i2++){
 		for(int i3=1;i3<21;i3++){
@@ -322,7 +308,6 @@ void Write_Flash(){
 		}
 	}
 
-
 	HAL_FLASH_Unlock();
 	__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGSERR );
 	FLASH_Erase_Sector(FLASH_SECTOR_6, VOLTAGE_RANGE_3);
@@ -338,117 +323,12 @@ void Write_Flash(){
 }
 
 void Read_Flash(){
-
    for (int i = 0; i < 1024; i++) {
 		// Flash 메모리의 주소에서 직접 데이터를 읽어와 ReadTest 배열에 저장합니다.
 	   userdata[i] = Flash_Read_Int(USER_DATA_FLASH_ADDRESS + i);
 	}
-	DoorSettingTemp[0]=userdata[DOORSETTINGTEMP_DATA];
-	DoorSettingTemp[1]=userdata[DOORSETTINGTEMP_DATA+1];
-	DoorSettingTemp[2]=userdata[DOORSETTINGTEMP_DATA+2];
 
-	ChamberSettingTemp[0]=userdata[CHAMBERSETTINGTEMP_DATA];
-	ChamberSettingTemp[1]=userdata[CHAMBERSETTINGTEMP_DATA+1];
-	ChamberSettingTemp[2]=userdata[CHAMBERSETTINGTEMP_DATA+2];
-
-	ChamberBackSettingTemp[0]=userdata[CHAMBERBACKSETTINGTEMP_DATA];
-	ChamberBackSettingTemp[1]=userdata[CHAMBERBACKSETTINGTEMP_DATA+1];
-	ChamberBackSettingTemp[2]=userdata[CHAMBERBACKSETTINGTEMP_DATA+2];
-
-	VaporizerSettingTemp[0]=userdata[VAPORIZERSETTINGTEMP_DATA];
-	VaporizerSettingTemp[1]=userdata[VAPORIZERSETTINGTEMP_DATA+1];
-	VaporizerSettingTemp[2]=userdata[VAPORIZERSETTINGTEMP_DATA+2];
-
-	if(DoorSettingTemp[0]==0){
-		DoorSettingTemp[0]=55;
-	}
-	if(DoorSettingTemp[1]==0){
-		DoorSettingTemp[1]=55;
-	}
-	if(ChamberSettingTemp[0]==0){
-		ChamberSettingTemp[0]=55;
-	}
-	if(ChamberSettingTemp[1]==0){
-		ChamberSettingTemp[1]=55;
-	}
-	if(ChamberBackSettingTemp[0]==0){
-		ChamberBackSettingTemp[0]=55;
-	}
-	if(ChamberBackSettingTemp[1]==0){
-		ChamberBackSettingTemp[1]=55;
-	}
-	if(VaporizerSettingTemp[0]==0){
-		VaporizerSettingTemp[0]=80;
-	}
-	if(VaporizerSettingTemp[1]==0){
-		VaporizerSettingTemp[1]=130;
-	}
-
-	PreesureCondition[0]=userdata[PRESSURECONDITION_DATA];
-	PreesureCondition[1]=userdata[PRESSURECONDITION_DATA+1];
-	PreesureCondition[2]=userdata[PRESSURECONDITION_DATA+2];
-
-	if(PreesureCondition[0]==0){
-			PreesureCondition[0]=50;
-	}
-	if(PreesureCondition[1]==0){
-			PreesureCondition[1]=25;
-	}
-	if(PreesureCondition[2]==0){
-			PreesureCondition[2]=25;
-	}
-
-
-	PlasmaTime[0]=userdata[PLASMATIME_DATA];
-	if(PlasmaTime[0]==0){
-		PlasmaTime[0]=1;
-	}
-	PlasmaTime[1]=userdata[PLASMATIME_DATA+1];
-
-	CalibrationTemp[0]=userdata[CALIBRATIONTEMP_DATA];
-	CalibrationTemp[1]=userdata[CALIBRATIONTEMP_DATA+1];
-	CalibrationTemp[2]=userdata[CALIBRATIONTEMP_DATA+2];
-	CalibrationTemp[3]=userdata[CALIBRATIONTEMP_DATA+3];
-
-	for(int i=0;i<4;i++){
-		if(CalibrationTemp[i]==0){
-			CalibrationTemp[i]=10;
-		}
-	}
-	//CalibrationVacuum=userdata[CALIBRATIONVACUUM_DATA];
-	CalibrationVacuum = char2float((unsigned char *)(userdata + CALIBRATIONVACUUM_DATA));
-	if(CalibrationVacuum==0){
-		CalibrationVacuum=100;
-	}
-
-	TestVacuumValue=userdata[TESTVACUUMVALUE_DATA];
-	if(TestVacuumValue==0){
-		TestVacuumValue=10;
-	}
-	TestLeakValue=userdata[TESTLEAKVALUE_DATA];
-	if(TestLeakValue==0){
-		TestLeakValue=2;
-	}
-	TestTempErrorValue=userdata[TESTTEMPERRORVALUE_DATA];
-	if(TestTempErrorValue==0){
-		TestTempErrorValue=2;
-	}
-
-
-
-	for(int i=0;i<3;i++){
-		flash_sterilant_production_year[i]=userdata[PRODUCTION_YEAR+8*i];
-		flash_sterilant_production_month[i]=userdata[PRODUCTION_MONTH+8*i];
-		flash_sterilant_production_day[i]=userdata[PRODUCTION_DAY+8*i];
-		flash_sterilant_production_number[i]=userdata[PRODUCTION_NUMBER+8*i];
-
-		flash_sterilant_open_year[i]=userdata[OPEN_YEAR+8*i];
-		flash_sterilant_open_month[i]=userdata[OPEN_MONTH+8*i];
-		flash_sterilant_open_day[i]=userdata[OPEN_DAY+8*i];
-
-		flash_sterilant_volume[i]=userdata[VOLUME+8*i];
-	}
-
+	/*장비 정보*///(70)
 	for(int i=0;i<10;i++){
 		flash_MODEL_NAME[i]=userdata[MODEL_NAME+i];
 		flash_HARDWARE_VERSION[i]=userdata[HARDWARE_VERSION+i];
@@ -482,6 +362,158 @@ void Read_Flash(){
 		sprintf(flash_LANGUAGE,"English   ");
 	}
 
+	/*계정 정보*///(51)
+	for(int j=0;j<5;j++){
+		for(int i=0;i<10;i++){
+			flash_ID[j][i]=userdata[FLASHID+i+10*j];
+			flash_PW[j][i]=userdata[FLASHPW+i+10*j];
+		}
+	}
+	flashuserCount=userdata[FLASHUSERCOUNT];
+	if(flashuserCount<=0){
+		flashuserCount=0;
+	}
+
+	/*세팅*///(39)
+	//기능 플래그 저장
+	AlarmCheckFlag=userdata[ALARMCHECKFLAG_DATA];
+	ErrorCheckFlag=userdata[ERRORCHECKFLAG_DATA];
+	reservationFlag=userdata[RESERVATIONFLAG_DATA];
+	autoprintFlag=userdata[AUTOPRINTFLAG_DATA];
+	printcopy=userdata[PRINTCOPY_DATA];
+	printgraphFlag=userdata[PRINTGRAPHFLAG_DATA];
+
+	//온도세팅 저장
+	DoorSettingTemp[0]=userdata[DOORSETTINGTEMP_DATA];
+	DoorSettingTemp[1]=userdata[DOORSETTINGTEMP_DATA+1];
+	DoorSettingTemp[2]=userdata[DOORSETTINGTEMP_DATA+2];
+	ChamberSettingTemp[0]=userdata[CHAMBERSETTINGTEMP_DATA];
+	ChamberSettingTemp[1]=userdata[CHAMBERSETTINGTEMP_DATA+1];
+	ChamberSettingTemp[2]=userdata[CHAMBERSETTINGTEMP_DATA+2];
+	ChamberBackSettingTemp[0]=userdata[CHAMBERBACKSETTINGTEMP_DATA];
+	ChamberBackSettingTemp[1]=userdata[CHAMBERBACKSETTINGTEMP_DATA+1];
+	ChamberBackSettingTemp[2]=userdata[CHAMBERBACKSETTINGTEMP_DATA+2];
+	VaporizerSettingTemp[0]=userdata[VAPORIZERSETTINGTEMP_DATA];
+	VaporizerSettingTemp[1]=userdata[VAPORIZERSETTINGTEMP_DATA+1];
+	VaporizerSettingTemp[2]=userdata[VAPORIZERSETTINGTEMP_DATA+2];
+	if(DoorSettingTemp[0]==0){
+		DoorSettingTemp[0]=55;
+	}
+	if(DoorSettingTemp[1]==0){
+		DoorSettingTemp[1]=55;
+	}
+	if(ChamberSettingTemp[0]==0){
+		ChamberSettingTemp[0]=55;
+	}
+	if(ChamberSettingTemp[1]==0){
+		ChamberSettingTemp[1]=55;
+	}
+	if(ChamberBackSettingTemp[0]==0){
+		ChamberBackSettingTemp[0]=55;
+	}
+	if(ChamberBackSettingTemp[1]==0){
+		ChamberBackSettingTemp[1]=55;
+	}
+	if(VaporizerSettingTemp[0]==0){
+		VaporizerSettingTemp[0]=80;
+	}
+	if(VaporizerSettingTemp[1]==0){
+		VaporizerSettingTemp[1]=130;
+	}
+
+	//진공조건 저장
+	PreesureCondition[0]=userdata[PRESSURECONDITION_DATA];
+	PreesureCondition[1]=userdata[PRESSURECONDITION_DATA+1];
+	PreesureCondition[2]=userdata[PRESSURECONDITION_DATA+2];
+
+	if(PreesureCondition[0]==0){
+			PreesureCondition[0]=50;
+	}
+	if(PreesureCondition[1]==0){
+			PreesureCondition[1]=25;
+	}
+	if(PreesureCondition[2]==0){
+			PreesureCondition[2]=25;
+	}
+
+	//페리 스피드 저장
+	perispeed[0]=userdata[PERISPEED_DATA];
+	perispeed[1]=userdata[PERISPEED_DATA+1];
+	perispeed[2]=userdata[PERISPEED_DATA+2];
+	if(perispeed[0]==0){
+		perispeed[0]=100;
+	}
+
+	//캘리브레이션 데이터 저장
+	CalibrationTemp[0]=userdata[CALIBRATIONTEMP_DATA];
+	CalibrationTemp[1]=userdata[CALIBRATIONTEMP_DATA+1];
+	CalibrationTemp[2]=userdata[CALIBRATIONTEMP_DATA+2];
+	CalibrationTemp[3]=userdata[CALIBRATIONTEMP_DATA+3];
+	for(int i=0;i<4;i++){
+		if(CalibrationTemp[i]==0){
+			CalibrationTemp[i]=10;
+		}
+	}
+	CalibrationVacuum=userdata[CALIBRATIONVACUUM_DATA];
+	if(CalibrationVacuum==0){
+		CalibrationVacuum=10;
+	}
+	vacuumsplope=(float)((userdata[VACUUMSLOPE_DATA]*100)+(userdata[VACUUMSLOPE_DATA+1]))/1000;
+	if(vacuumsplope==0){
+		vacuumsplope=0.261;
+	}
+	vacuumintercept=(-((float)(userdata[VACUUMINTERCEPT_DATA]*100)+(float)(userdata[VACUUMINTERCEPT_DATA+1]))/10);
+	if(vacuumintercept==0){
+		vacuumintercept=-207.5;
+	}
+
+	//셀프 테스트 벨류 및 오차 저장
+	TestVacuumValue=userdata[TESTVACUUMVALUE_DATA];
+	if(TestVacuumValue==0){
+		TestVacuumValue=10;
+	}
+	TestLeakValue=userdata[TESTLEAKVALUE_DATA];
+	if(TestLeakValue==0){
+		TestLeakValue=2;
+	}
+	TestTempErrorValue=userdata[TESTTEMPERRORVALUE_DATA];
+	if(TestTempErrorValue==0){
+		TestTempErrorValue=2;
+	}
+
+	//과수 기한 설정
+	SterilantCheckDay=userdata[STERILANTCHECKDAY_DATA];
+	if(SterilantCheckDay==0){
+		SterilantCheckDay=60;
+	}
+
+	//도어 오픈 압력 설정
+	DoorOpenPressure=(userdata[DOOROPENPRESSURE_DATA]*100)+(userdata[DOOROPENPRESSURE_DATA+1]);
+	if(DoorOpenPressure==0){
+		DoorOpenPressure=720;
+	}
+
+
+	/*PM 정보*///(22)
+	//사용 횟수 카운트
+	totalCount=(userdata[TOTALCOUNT_DATA]*100)+(userdata[TOTALCOUNT_DATA+1]);
+	dailyCount=userdata[DAILYCOUNT_DATA];
+	beforeday=userdata[BEFOREDAY_DATA];
+
+	//멸균제 데이터 저장
+	RFIDData.production_year=userdata[PRODUCTION_YEAR_DATA];
+	RFIDData.production_month=userdata[PRODUCTION_MONTH_DATA];
+	RFIDData.production_day=userdata[PRODUCTION_DAY];
+	RFIDData.production_number=userdata[PRODUCTION_NUMBER];
+
+	RFIDData.open_year=userdata[OPEN_YEAR];
+	RFIDData.open_month=userdata[OPEN_MONTH];
+	RFIDData.open_day=userdata[OPEN_DAY];
+
+	RFIDData.volume=userdata[VOLUME];
+	RFIDData.volumemax=userdata[VOLUMEMAX];
+
+	//필터, 플라즈마 데이터 저장
 	CarbonFilterMax=(userdata[CARBONFILTERMAX]*100)+(userdata[CARBONFILTERMAX+1]);
 	if(CarbonFilterMax==0){
 		CarbonFilterMax=4000;
@@ -508,26 +540,8 @@ void Read_Flash(){
 		PlasmaAssy=4000;
 	}
 
-
-	totalCount=(userdata[TOTALCOUNT]*100)+(userdata[TOTALCOUNT+1]);
-	//dailyCount=(userdata[DAILYCOUNT]*100)+(userdata[DAILYCOUNT+1]);
-	dailyCount=userdata[DAILYCOUNT];
-
-	flashuserCount=userdata[FLASHUSERCOUNT];
-	if(flashuserCount<=0){
-		flashuserCount=0;
-	}
-
-	for(int j=0;j<5;j++){
-		for(int i=0;i<10;i++){
-			flash_ID[j][i]=userdata[FLASHID+i+10*j];
-			flash_PW[j][i]=userdata[FLASHPW+i+10*j];
-		}
-	}
-
-
+	/*공정*///(720)
 	int j=0;
-
 	if(CycleName==1){
 		j=CYCLEDATA1;
 	}
@@ -564,6 +578,7 @@ void Read_Flash(){
 		}
 	}
 }
+
 void TestCycle(){
 	CycleData[1][1].PartsSetting=VACUUMVALVE;
 	CycleData[1][1].Time=1;
@@ -1177,68 +1192,6 @@ void AdvancedCycle(){
 	CycleData[6][8].Time=1;
 }
 
-bool is_same(unsigned char a[], unsigned char b[], int length){
-    for (int i = 0; i < length; i++) {
-        if (a[i] != b[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-void rfid_callback() {
-    // Set production variables (you should read these values from the RFID)
-    unsigned char currentoday_date[] = {RFIDData.production_year, RFIDData.production_month, RFIDData.production_day, RFIDData.production_number};
-
-    bool found = false;
-    for (int i = 0; i < 3; i++) {
-        unsigned char flash_data[] = {flash_sterilant_production_year[i], flash_sterilant_production_month[i], flash_sterilant_production_day[i], flash_sterilant_production_number[i]};
-
-        if (is_same(currentoday_date, flash_data, 4)) {
-        	RFIDData.open_year = flash_sterilant_open_year[i];
-        	RFIDData.open_month = flash_sterilant_open_month[i];
-        	RFIDData.open_day = flash_sterilant_open_day[i];
-        	RFIDData.volume = flash_sterilant_volume[i];
-        	RFIDData.currentID = i;
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-
-    	shift_flash_data();
-    	RFIDData.currentID = 2;
-        // Copy the production data to the newest flash index
-        flash_sterilant_production_year[2] = RFIDData.production_year;
-        flash_sterilant_production_month[2] = RFIDData.production_month;
-        flash_sterilant_production_day[2] = RFIDData.production_day;
-        flash_sterilant_production_number[2] = RFIDData.production_number;
-
-        // Update the newest data
-        GetTime();
-        flash_sterilant_open_year[2] = bcd2bin(today_date.year);
-        flash_sterilant_open_month[2] = bcd2bin(today_date.month);
-        flash_sterilant_open_day[2] = bcd2bin(today_date.day);
-        flash_sterilant_volume[2] = 50;
-
-
-    }
-}
-
-void shift_flash_data() {
-    // Shift flash data
-    for (int i = 0; i < 2; i++) {
-        flash_sterilant_production_year[i] = flash_sterilant_production_year[i + 1];
-        flash_sterilant_production_month[i] = flash_sterilant_production_month[i + 1];
-        flash_sterilant_production_day[i] = flash_sterilant_production_day[i + 1];
-        flash_sterilant_production_number[i] = flash_sterilant_production_number[i + 1];
-        flash_sterilant_open_year[i] = flash_sterilant_open_year[i + 1];
-        flash_sterilant_open_month[i] = flash_sterilant_open_month[i + 1];
-        flash_sterilant_open_day[i] = flash_sterilant_open_day[i + 1];
-        flash_sterilant_volume[i] = flash_sterilant_volume[i + 1];
-    }
-}
 HAL_StatusTypeDef Flash_Write_Int(uint32_t address, uint32_t value)
 {
     HAL_StatusTypeDef status;

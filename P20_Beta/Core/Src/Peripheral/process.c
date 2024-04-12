@@ -17,26 +17,21 @@
 #define FACTORYTEST	0
 
 
-bool TESTPIN;
-
-extern unsigned char flash_sterilant_volume[3];
-extern struct RFID_format RFIDData;
-
-extern int autoprint;
-
-extern int CycleName;
 int Select_NORMAL_MODE=1;
-int Liquidflag=0;
+int LiquidFlag=0;
 int TestMode=0;
-int TestCompleteflag=0;
-extern int temperror[5];
+int TestCompleteFlag=0;
+int TestProcess=0;
+
 float TestPressure[10]={};
 int Pressuererror[2];
 int Valveerror[3];
 
 int devicealram[14]={};
 
-int Stopflag=0;
+int StopFlag=0;
+
+int leaktesttime=60;
 /*
 알람1	장비 전원 정전	장비 전원 차단 됨
 알람2	멸균제 사용 기간 지남	장비내 멸균제 삽입 후 60일 지남
@@ -72,16 +67,13 @@ int errorcode=0;
 에러10	멸균제 주입 후 압력 도달 안됨	멸균제 주입 불량 및 압력 센서 문제
  */
 
-extern int TestVacuumValue;
-extern int TestLeakValue;
+int TestVacuumValue=20;
+int TestLeakValue=5;
 
 
-
-int TestProcess=0;
-int Solenoid_flag=0;
+int Solenoid_Flag=0;
 int LED1=0;
 int printmode=0;
-extern float Temperature[5];
 
 float PressureData[300];
 float TemperatureData[300];
@@ -90,32 +82,34 @@ float TemperatureData[300];
 
 unsigned int TensecondCounter=0;
 unsigned int DataCounter=0;
-extern unsigned int	EndTimeCounter;
-unsigned char Processflag=0 ,CurrentProcess=0, CurrentStep=0, ProcessStep=0;
-extern unsigned char Running_Flag, EndTimer_Flag, ProcessWait_Flag;
+unsigned char ProcessFlag=0 ,CurrentProcess=0, CurrentStep=0, ProcessStep=0;
+
+unsigned int TotalTime;
+unsigned int fProcessTime[7];
+unsigned int CycleTime=0;
+unsigned int EndTime=0;
+unsigned int ProcessTime[7]={};
+unsigned int StepTime[21]={};
 
 int Vaccum_Check=0;
 
-extern int PlasmaControl_flag;
-extern int PreesureCondition[3];
-extern int ProcessNum,StepNum;
-extern struct Process_data_format	CycleData[7][21];
+struct Process_data_format	CycleData[7][21];
 
 struct data_format p_data;
 struct data_format load_data;
 
-extern unsigned int TotalTime;
-extern unsigned int fProcessTime[7];
-extern unsigned int ProcessTime[7];
-
-extern int current_page;
 
 int Vacuum_Check_Count=0;
 
-extern unsigned char Timer_DeliSecond_Flag, Timer_Half_1s_Flag, Timer_1s_Flag;
-extern unsigned char UART_Receive_Flag, EndTimer_Flag;
-
 int HeaterControlMode=1;
+
+#define SHORT		1
+#define STANDARD	2
+#define ADVANCED	3
+
+int CycleName=SHORT;
+int ProcessNum,StepNum;
+
 
 void loop(){
 	if(UART_Receive_Flag) {
@@ -144,9 +138,6 @@ void DeliSecondProcess(void){
 	GetValue();
 	DisplayVacuumSensor();
 	//printf("max:4095, min:3500, data1:%d, data2:%d, data3:%d  \n",data1/10, Pressure, Pressure2);
-	if(PlasmaControl_flag==1){
-		PlasmaControl();
-	}
 }
 int tempcnt=0;
 
@@ -183,8 +174,8 @@ void HalfSecondProcess(void){
 		DoorOpenFlag=DoorOpenProcess();
 	}
 
-	if(LevelSensor1Check()){
-		Liquidflag=2;
+	if(LevelSensor2Check()){
+		LiquidFlag=2;
 		TurnOffPeristalticPump();
 	}
 
@@ -196,12 +187,11 @@ void HalfSecondProcess(void){
 			DisplayProcessTestValues();
 		}
 	}
-	if(Running_Flag==1){
-
+	if(TestMode==1||TestMode==9){
+		DisplayTime(0x25,0x50,EndTestTimeCounter);
 	}
-	//HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
-	//TESTPIN=HAL_GPIO_ReadPin(LED_GR_GPIO_Port, LED_GR_Pin);
 
+	HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
 }
 
 
@@ -223,17 +213,17 @@ void OneSecondProcess(void){
 	}
 
 	//스탠바이 페이지에서 스타트 버튼 활성화
-	if(current_page==LCD_STANDBY_OK_PAGE){
+	if(currentpage==LCD_STANDBY_OK_PAGE){
 		if(DoorLatchCheck()==0){
 			DisplayPage(LCD_STANDBY_PAGE);
 		}
 	}
-	else if(current_page==LCD_STANDBY_PAGE){
+	else if(currentpage==LCD_STANDBY_PAGE){
 		if(DoorLatchCheck()==1){
 			DisplayPage(LCD_STANDBY_OK_PAGE);
 		}
 	}
-	if(current_page==LCD_EORROR_WAIT_PAGE){
+	if(currentpage==LCD_EORROR_WAIT_PAGE){
 		if(CurrentProcess==5){
 			DisplayTime(0x14,0x01,ProcessTime[5]+ProcessTime[6]);
 		}
@@ -343,9 +333,9 @@ void Start(){
 	CurrentStep=1;
 	EndTimer_Flag=1;
 	Vacuum_Check_Count=0;
-	Stopflag=0;
+	StopFlag=0;
 	TotalTime=0;
-	Liquidflag=0;
+	LiquidFlag=0;
     memset(deviceerror, 0, sizeof(deviceerror));
 
 	VacuumPump(1);
@@ -361,14 +351,19 @@ void Start(){
 }
 
 void Stop(){
-
 	deviceerror[1]=1;
+	DisplayPage(LCD_EORROR_POPUP_PAGE);
+	ErrorEndProcess();
+	deviceerror[0]=0;
+	StopFlag=1;
 }
 
 
 void FactoryTestStart(){
 	Select_NORMAL_MODE=0;
 	Running_Flag=1;
+	TotalCyle_Count();
+	DailyCyle_Count();
 
 	HeaterControlMode=2;
 
@@ -377,9 +372,9 @@ void FactoryTestStart(){
 	EndTimer_Flag=1;
 
 	Vacuum_Check_Count=0;
-	Stopflag=0;
+	StopFlag=0;
 	TotalTime=0;
-	Liquidflag=0;
+	LiquidFlag=0;
     memset(deviceerror, 0, sizeof(deviceerror));
 
 	VacuumPump(1);
@@ -396,16 +391,21 @@ void FactoryTestStart(){
 
 void FactoryTestStop(){
 	deviceerror[1]=1;
+	ErrorEndProcess();
+	deviceerror[0]=0;
+	StopFlag=1;
 }
 void TestModeStart(int mode){
 	TestMode=mode;
 	TestProcess=1;
 	EndTimer_Flag=1;
-	TestCompleteflag=0;
+	TestCompleteFlag=0;
 }
 
 void TestModeStop(int mode){
 	TestMode=9;
+	EndTestTimeCounter=10*100;
+	DisplayTime(0x25,0x50,EndTestTimeCounter);
 	TestProcess=1;
 	EndTimer_Flag=1;
 }
@@ -457,42 +457,36 @@ void Endtime_Check_Process(){
 	}
 	if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x08)==0x08){
 		if(CurrentProcess==1){
-			if(Liquidflag==1){
+			if(LiquidFlag==1){
 				deviceerror[6]=1;
 			}
 		}
 		else if(CurrentProcess==3){
-			if(Liquidflag==1){
+			if(LiquidFlag==1){
 				deviceerror[9]=1;
 			}
 		}
 	}
 
 }
-void ErrorCheck(){
-	if(Running_Flag==1){
-		if(Stopflag==0){
-			for(int i=1;i<10;i++){
-				deviceerror[0]+=deviceerror[i];
-			}
-		}
-	}
-}
-void ErrorEndProcess(){
+void ErrorEndProcess(){	//에러 후 종료 프로세스
 	if(CurrentProcess==1){
-		if(Liquidflag==1){
+		if(LiquidFlag==1){
+			CycleTime=ProcessTime[5]+ProcessTime[6];
 			CurrentProcess=5;
 			CurrentStep=1;
 			EndTimer_Flag=1;
-			Liquidflag=0;
+			LiquidFlag=0;
 		}
-		else if(Liquidflag==2){
+		else if(LiquidFlag==2){
+			CycleTime=ProcessTime[5]+ProcessTime[6];
 			CurrentProcess=5;
 			CurrentStep=1;
 			EndTimer_Flag=1;
-			Liquidflag=0;
+			LiquidFlag=0;
 		}
 		else{
+			CycleTime=ProcessTime[6];
 			CurrentProcess=6;
 			CurrentStep=1;
 			EndTimer_Flag=1;
@@ -500,30 +494,35 @@ void ErrorEndProcess(){
 
 	}
 	else if(CurrentProcess==2){
+		CycleTime=ProcessTime[5]+ProcessTime[6];
 		CurrentProcess=5;
 		CurrentStep=1;
 		EndTimer_Flag=1;
 	}
 	else if(CurrentProcess==3){
-		if(Liquidflag==1){
+		if(LiquidFlag==1){
+			CycleTime=ProcessTime[5]+ProcessTime[6];
 			CurrentProcess=5;
 			CurrentStep=1;
 			EndTimer_Flag=1;
-			Liquidflag=0;
+			LiquidFlag=0;
 		}
-		else if(Liquidflag==2){
+		else if(LiquidFlag==2){
+			CycleTime=ProcessTime[5]+ProcessTime[6];
 			CurrentProcess=5;
 			CurrentStep=1;
 			EndTimer_Flag=1;
-			Liquidflag=0;
+			LiquidFlag=0;
 		}
 		else{
+			CycleTime=ProcessTime[6];
 			CurrentProcess=6;
 			CurrentStep=1;
 			EndTimer_Flag=1;
 		}
 	}
 	else if(CurrentProcess==4){
+		CycleTime=ProcessTime[5]+ProcessTime[6];
 		CurrentProcess=5;
 		CurrentStep=1;
 		EndTimer_Flag=1;
@@ -531,161 +530,7 @@ void ErrorEndProcess(){
 	ReadStepTime();
 	ReadProcessTime();
 }
-void DeviceErrorProcess(){
-	//여기
-	/*
-	에러1	공정 취소	공정 중 취소 버튼 누름
-	에러2	챔버 온도 도달 안됨	챔버 설정 온도 도달 안됨
-	에러3	압력1 도달 안됨	압력1 설정 시간내 도달 안됨
-	에러4	압력2 도달 안됨	압력2 설정 시간내 도달 안됨
-	에러5	기화기 히터 온도 확인	기화기 온도 설정 시간내 도달 안됨 (V3P2까지 온도 확인)
-	에러6	멸균제1 감지 안됨	멸균제1 부족 및 공급 불량
-	에러7	멸균제 주입 후 압력 도달 안됨	멸균제 주입 불량 및 압력 센서 문제
-	에러8	압력3 도달 안됨	압력3 설정 시간내 도달 안됨
-	에러9	멸균제2 감지 안됨	멸균제2 부족 및 공급 불량
-	에러10	멸균제 주입 후 압력 도달 안됨	멸균제 주입 불량 및 압력 센서 문제
-	 */
-	ErrorCheck();
-	if(deviceerror[0]!=0){
-		if(Stopflag==0){
-			if(Select_NORMAL_MODE==1){
-				if(deviceerror[1]==1){
-					//취소
-					DisplayPage8Char(0x13,0x01,"ERROR01");
-					DisplayPage8Char(0x12,0x01,"ERROR01");
-					DisplayPage4Char(0x14,0x10,"01  ");
-					errorcode=1;
-				}
-				else if(deviceerror[2]==1){
-					//전구간 체크 온도 도달 안됨
-					DisplayPage8Char(0x13,0x01,"ERROR02");
-					DisplayPage8Char(0x12,0x01,"ERROR02");
-					DisplayPage4Char(0x14,0x10,"02  ");
-					errorcode=2;
-				}
-				else if(deviceerror[3]==1){
-					//에러3 압력1 도달 안됨
-					DisplayPage8Char(0x13,0x01,"ERROR03");
-					DisplayPage8Char(0x12,0x01,"ERROR03");
-					DisplayPage4Char(0x14,0x10,"03  ");
-					errorcode=3;
-				}
-				else if(deviceerror[4]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR04");
-					DisplayPage8Char(0x12,0x01,"ERROR04");
-					DisplayPage4Char(0x14,0x10,"04  ");
-					errorcode=4;
-				}
-				else if(deviceerror[5]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR05");
-					DisplayPage8Char(0x12,0x01,"ERROR05");
-					DisplayPage4Char(0x14,0x10,"05  ");
-					errorcode=5;
 
-				}
-				else if(deviceerror[6]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR06");
-					DisplayPage8Char(0x12,0x01,"ERROR06");
-					DisplayPage4Char(0x14,0x10,"06  ");
-					errorcode=6;
-				}
-				else if(deviceerror[7]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR07");
-					DisplayPage8Char(0x12,0x01,"ERROR07");
-					DisplayPage4Char(0x14,0x10,"07  ");
-					errorcode=7;
-				}
-				else if(deviceerror[8]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR08");
-					DisplayPage8Char(0x12,0x01,"ERROR08");
-					DisplayPage4Char(0x14,0x10,"08  ");
-					errorcode=8;
-				}
-				else if(deviceerror[9]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR09");
-					DisplayPage8Char(0x12,0x01,"ERROR09");
-					DisplayPage4Char(0x14,0x10,"09  ");
-					errorcode=9;
-				}
-				else if(deviceerror[10]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR10");
-					DisplayPage8Char(0x12,0x01,"ERROR10");
-					DisplayPage4Char(0x14,0x10,"10  ");
-					errorcode=10;
-				}
-				else{
-
-				}
-				DisplayPage(LCD_EORROR_POPUP_PAGE);
-				ErrorEndProcess();
-				deviceerror[0]=0;
-				Stopflag=1;
-			}
-			else{
-				if(deviceerror[1]==1){
-					//취소
-					DisplayPage8Char(0x13,0x01,"ERROR01");
-					DisplayPage8Char(0x12,0x01,"ERROR01");
-					errorcode=1;
-				}
-				else if(deviceerror[2]==1){
-					//전구간 체크 온도 도달 안됨
-					DisplayPage8Char(0x13,0x01,"ERROR02");
-					DisplayPage8Char(0x12,0x01,"ERROR02");
-					errorcode=2;
-				}
-				else if(deviceerror[3]==1){
-					//에러3 압력1 도달 안됨
-					DisplayPage8Char(0x13,0x01,"ERROR03");
-					DisplayPage8Char(0x12,0x01,"ERROR03");
-					errorcode=3;
-				}
-				else if(deviceerror[4]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR04");
-					DisplayPage8Char(0x12,0x01,"ERROR04");
-					errorcode=4;
-				}
-				else if(deviceerror[5]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR05");
-					DisplayPage8Char(0x12,0x01,"ERROR05");
-					errorcode=5;
-
-				}
-				else if(deviceerror[6]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR06");
-					DisplayPage8Char(0x12,0x01,"ERROR06");
-					errorcode=6;
-				}
-				else if(deviceerror[7]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR07");
-					DisplayPage8Char(0x12,0x01,"ERROR07");
-					errorcode=7;
-				}
-				else if(deviceerror[8]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR08");
-					DisplayPage8Char(0x12,0x01,"ERROR08");
-					errorcode=8;
-				}
-				else if(deviceerror[9]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR09");
-					DisplayPage8Char(0x12,0x01,"ERROR09");
-					errorcode=9;
-				}
-				else if(deviceerror[10]==1){
-					DisplayPage8Char(0x13,0x01,"ERROR10");
-					DisplayPage8Char(0x12,0x01,"ERROR10");
-					errorcode=10;
-				}
-				else{
-
-				}
-				ErrorEndProcess();
-				deviceerror[0]=0;
-				Stopflag=1;
-			}
-		}
-	}
-}
 
 void NormalMode(){
 	if(CurrentStep>20){
@@ -718,7 +563,7 @@ void NormalMode(){
 
 		HeaterControlMode=1;
 
-		if(Stopflag==0){			//정상 종료
+		if(StopFlag==0){			//정상 종료
 			DisplayPage8Char(0x12,0x01,"COMPLETE");
 			p_data.status=11;
 		}
@@ -736,8 +581,9 @@ void NormalMode(){
 		PlasmaAssy_Count();
 
 		GetEndTime();
-		if(autoprint==1){
+		if(autoprintFlag==1){
 			CyclePrint();
+			SaveCycleData();	//여기 확인
 		}
 
 		//Write_Setting_Data_Flash();
@@ -752,7 +598,6 @@ void NormalMode(){
 		CurrentProcess=1;
 		StepNum=1;
 		CurrentStep=1;
-		PlasmaControl_flag=0;
 
 		DisplayPage(LCD_RESULT_PAGE);
 
@@ -771,40 +616,22 @@ void NormalMode(){
 		VentValve((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x02)==0x02);
 		InjectionValve((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x04)==0x04);
 		if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x04)==0x04){
-			Liquidflag=0;
+			LiquidFlag=0;
 		}
 		if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x08)==0x08){
-			Liquidflag=1;
+			LiquidFlag=1;
 			PeriPump(1);
 			//볼륨 카은트
-			flash_sterilant_volume[RFIDData.currentID]--;
-			if(flash_sterilant_volume[RFIDData.currentID]<=0){
-				flash_sterilant_volume[RFIDData.currentID]=0;
+			RFIDData.volume-=4;
+			if(RFIDData.volume<=0){
+				RFIDData.volume=0;
 			}
-			DisplayPageValue(0x11,0x20,flash_sterilant_volume[RFIDData.currentID]);
+			DisplayPageValue(0x11,0x20,RFIDData.volume);
 		}
 		else{
 			PeriPump(0);
 		}
-		if(PlasmaControl_flag==0){
-			if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x10)==0x10){
-				PlasmaControlSetting();
-				PlasmaControl_flag=1;
-			}
-			else{
-				PlasmaControl_flag=0;
-				Plasma(0);
-			}
-		}
-		else{
-			if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x10)==0x10){
-				PlasmaControl_flag=1;
-			}
-			else{
-				PlasmaControl_flag=0;
-				Plasma(0);
-			}
-		}
+		Plasma((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x10)==0x10);
 
 		if((CycleData[ProcessNum][StepNum].PartsSetting&0x60)==0x00){
 			Vaccum_Check=0;
@@ -854,7 +681,6 @@ void FactoryTestMode(){
 		CurrentProcess=1;
 		StepNum=1;
 		CurrentStep=1;
-		PlasmaControl_flag=0;
 
 		VacuumPump(0);
 		Fan(0);
@@ -872,8 +698,9 @@ void FactoryTestMode(){
 
 
 		GetEndTime();
-		if(autoprint==1){
+		if(autoprintFlag==1){
 			CyclePrint();
+			SaveCycleData();	//여기 확인
 		}
 
 		ReadStepTime();
@@ -897,37 +724,20 @@ void FactoryTestMode(){
 		VentValve((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x02)==0x02);
 		InjectionValve((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x04)==0x04);
 		if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x08)==0x08){
-			Liquidflag=1;
+			LiquidFlag=1;
 			PeriPump(1);
 			//볼륨 카은트
-			flash_sterilant_volume[RFIDData.currentID]=flash_sterilant_volume[RFIDData.currentID]-1;
-			if(flash_sterilant_volume[RFIDData.currentID]<=0){
-				flash_sterilant_volume[RFIDData.currentID]=0;
+			RFIDData.volume-=4;
+			if(RFIDData.volume<=0){
+				RFIDData.volume=0;
 			}
-			DisplayPageValue(0x11,0x20,flash_sterilant_volume[RFIDData.currentID]);
+			DisplayPageValue(0x11,0x20,RFIDData.volume);
 		}
 		else{
 			PeriPump(0);
 		}
-		if(PlasmaControl_flag==0){
-			if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x10)==0x10){
-				PlasmaControlSetting();
-				PlasmaControl_flag=1;
-			}
-			else{
-				PlasmaControl_flag=0;
-				Plasma(0);
-			}
-		}
-		else{
-			if((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x10)==0x10){
-				PlasmaControl_flag=1;
-			}
-			else{
-				PlasmaControl_flag=0;
-				Plasma(0);
-			}
-		}
+		Plasma((CycleData[CurrentProcess][CurrentStep].PartsSetting&0x10)==0x10);
+
 
 		if((CycleData[ProcessNum][StepNum].PartsSetting&0x60)==0x00){
 			Vaccum_Check=0;
@@ -966,8 +776,8 @@ void ProcessEndTimer(void){
 
 	//진공테스트
 	if(TestMode==1) {
-		int leaktesttime=60;
 		if(TestProcess==1){
+			EndTestTimeCounter=(leaktesttime*10+15)*100;
 			TestProcess=2;
 			VacuumPump(1);
 			VacuumValve(1);
@@ -1082,7 +892,7 @@ void ProcessEndTimer(void){
 		}
 		else if(TestProcess==12){
 			VentValve(0);
-			EndTimeCounter=5*100;
+			EndTimeCounter=1*100;
 			TestMode=0;
 			if(Pressuererror[1]==0){
 				DisplayPage4Char(0x25,0x44,"PASS");	//결과값
@@ -1094,7 +904,8 @@ void ProcessEndTimer(void){
 				Pressuererror[1]=1;
 				DisplayPage4Char(0x25,0x44,"FAIL");	//결과값
 			}
-			TestCompleteflag=1;
+			TestCompleteFlag=1;
+			DisplayPage(LCD_USER_LEAKTEST_PAGE);
 		}
 	}
 
@@ -1148,7 +959,7 @@ void ProcessEndTimer(void){
 			//추가 수정
 			EndTimeCounter=100;
 			TestMode=0;
-			TestCompleteflag=1;
+			TestCompleteFlag=1;
 		}
 	}
 
@@ -1231,7 +1042,7 @@ void ProcessEndTimer(void){
 			else if(TestProcess==8){
 				EndTimeCounter=1*100;
 				TestMode=0;
-				TestCompleteflag=1;
+				TestCompleteFlag=1;
 			}
 		}
 
@@ -1250,7 +1061,8 @@ void ProcessEndTimer(void){
 
 			EndTimeCounter=1*100;
 			TestMode=0;
-			TestCompleteflag=0;
+			TestCompleteFlag=0;
+			Display25page();
 		}
 	}
 	EndTimer_Flag = 0;

@@ -13,6 +13,10 @@
 #define State2			1
 #define State3			2
 
+
+extern int temperror[5];
+extern int TestTempErrorValue;
+
 	/*
 	 *
 	#define State1			0	슬립

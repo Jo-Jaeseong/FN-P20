@@ -175,7 +175,10 @@ void Error_Handler(void);
 #define GPIO_OUT2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
-
+extern unsigned int	EndTimeCounter, EndTestTimeCounter;
+extern unsigned char Timer_DeliSecond_Flag, Timer_Half_1s_Flag, Timer_1s_Flag;
+extern unsigned char UART_Receive_Flag;
+extern unsigned char Running_Flag, EndTimer_Flag, ProcessWait_Flag;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

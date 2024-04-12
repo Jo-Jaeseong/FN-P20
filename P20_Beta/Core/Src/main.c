@@ -94,23 +94,10 @@ void MX_USB_HOST_Process(void);
 /* USER CODE BEGIN 0 */
 
 unsigned int	mscounter;
-unsigned int	EndTimeCounter;
+unsigned int	EndTimeCounter, EndTestTimeCounter;
 unsigned char Timer_DeliSecond_Flag, Timer_Half_1s_Flag, Timer_1s_Flag;
 unsigned char UART_Receive_Flag;
 unsigned char Running_Flag, EndTimer_Flag, ProcessWait_Flag;
-
-extern unsigned int TotalTime;
-extern unsigned int fProcessTime[7];
-
-
-extern unsigned char CurrentProcess, CurrentStep;
-extern unsigned int CycleTime;
-extern unsigned int ProcessTime[7];
-extern unsigned int StepTime[21];
-extern unsigned char LCD_rx_data[30];
-extern int TestMode,TestProcess;
-
-extern int PreesureCondition[3];
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -140,7 +127,8 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -1053,6 +1041,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					if(EndTimeCounter == 0){
 						EndTimer_Flag = 1;	//???���?????? ?���??????
 					}
+					EndTestTimeCounter--;
+					if(EndTestTimeCounter == 0){
+						EndTestTimeCounter = 1;	//???���?????? ?���??????
+					}
 				}
 			}
 			else if(TestMode==2){
@@ -1076,6 +1068,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					EndTimeCounter--;	//카운?��
 					if(EndTimeCounter == 0){
 						EndTimer_Flag = 1;	//???���?????? ?���??????
+					}
+					EndTestTimeCounter--;
+					if(EndTestTimeCounter == 0){
+						EndTestTimeCounter = 1;	//???���?????? ?���??????
 					}
 				}
 			}

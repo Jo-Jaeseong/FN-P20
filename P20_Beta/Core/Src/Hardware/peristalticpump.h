@@ -8,6 +8,8 @@
 #ifndef SRC_HARDWARE_PERISTALTICPUMP_H_
 #define SRC_HARDWARE_PERISTALTICPUMP_H_
 
+extern int perispeed[3];
+
 void TurnOnPeristalticPump(void);
 void TurnOffPeristalticPump(void);
 void PeristalticSpeed(void);

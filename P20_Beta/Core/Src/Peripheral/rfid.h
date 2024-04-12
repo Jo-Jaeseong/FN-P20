@@ -23,13 +23,15 @@ struct RFID_format {
 	unsigned int production_year, production_month, production_day;
 	unsigned int production_number;
 	unsigned int open_year, open_month, open_day;
-	unsigned int volume;
+	unsigned int volume, volumemax;
 	unsigned int elapsed_days;
-	unsigned int currentID;
 };
 
 extern struct RFID_format RFIDData;
+extern int checkret;
+extern int SterilantCheckDay;
 
+bool is_same(unsigned char a[], unsigned char b[], int length);
 void InitRFID(void);
 uint32_t ReadRFID(void);
 

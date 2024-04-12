@@ -14,18 +14,15 @@
 #define LevelSensor2_Pin	GPIO_IN7_Pin
 
 int LevelSensor1Check(){
-
 	if(HAL_GPIO_ReadPin(LevelSensor1_Port, LevelSensor1_Pin)==1){
 		return 1;
 	}
 	else{
 		return 0;
 	}
-
 }
 
 int LevelSensor2Check(){
-	int LiquidSensor_flag=0;
 	if(HAL_GPIO_ReadPin(LevelSensor2_Port, LevelSensor2_Pin)==1){
 		return 1;
 	}

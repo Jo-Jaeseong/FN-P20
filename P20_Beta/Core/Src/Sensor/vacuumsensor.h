@@ -17,13 +17,13 @@ typedef struct {
 } SensorData;
 
 extern SensorData dataPoint1, dataPoint2;
-
 extern float torrValue1, torrValue2;
 extern int data1,data2;
 
-extern float m, b; // 선형 변환을 위한 변수들
-
-extern int HighMeasureFlag, LowMeasureFlag;
+extern float vacuumsplope, vacuumintercept; // 선형 변환을 위한 변수들
+extern int CalibrationVacuum;
+extern int PreesureCondition[3];
+extern int DoorOpenPressure;
 
 void InitADC();
 void GetValue();

@@ -5,7 +5,6 @@
  *      Author: CBT
  */
 
-
 #include "stm32f4xx_hal.h"
 #include <string.h>
 #include <stdbool.h>
@@ -16,8 +15,6 @@
 #include "hardware.h"
 #include "sensor.h"
 #include "peripheral.h"
-
-
 
 /* W25Q16 SPI Commands */
 #define W25Q16_CMD_WRITE_ENABLE 0x06
@@ -33,16 +30,8 @@
 #define W25Q16_CS_Pin F_CS_Pin
 #define W25Q16_CS_GPIO_Port F_CS_GPIO_Port
 
-//extern SPI_HandleTypeDef hspi1;
-
-
-
 extern float PressureData[300];
 extern float TemperatureData[300];
-extern unsigned int CurrentUser;
-
-extern struct data_format p_data;
-
 
 unsigned char loadflash_ID[10];
 unsigned char flash_load_index;
@@ -50,11 +39,7 @@ extern struct data_format load_data;
 float loadPressureData[300];
 float loadTemperatureData[300];
 
-extern struct RFID_format RFIDData;
 struct RFID_format loadRFIDData;
-
-extern unsigned int TotalTime;
-extern unsigned int fProcessTime[7];
 
 unsigned int loadTotalTime;
 unsigned int loadfProcessTime[7];
@@ -182,6 +167,7 @@ void Write_Data_Flash(){
 	write_data[19]=RFIDData.elapsed_days;
 
 	//TotalTime
+	/*
 	int tempminute,tempsecond;
 	tempminute=(TotalTime/100)/60;
 	tempsecond=(TotalTime/100)%60;
@@ -195,7 +181,7 @@ void Write_Data_Flash(){
 		write_data[22+2*i]=tempminute;
 		write_data[23+2*i]=tempsecond;
 	}
-
+	 */
 	write_data[44]=(int)totalCount/100;
 	write_data[45]=(int)totalCount%100;
 	write_data[46]=dailyCount;
@@ -293,7 +279,6 @@ void Read_Data_Flash(){
 	loadRFIDData.open_day=read_data[17];
 
 	loadRFIDData.volume=read_data[18];
-	loadRFIDData.elapsed_days=read_data[19];
 
 	/*
 	 - 날짜

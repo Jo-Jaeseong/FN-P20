@@ -5,8 +5,9 @@
  *      Author: monster
  */
 #include "main.h"
-#include "Process.h"
-#include "rfid.h"
+#include "hardware.h"
+#include "peripheral.h"
+#include "sensor.h"
 
 extern SPI_HandleTypeDef hspi2;
 
@@ -184,10 +185,11 @@ int MFRC522_ParseType(uint8_t TagSelectRet);
 //extern struct RFID_format RFIDData;
 //char RFIDData[4];
 
-struct RFID_format RFIDData;
-
+struct RFID_format RFIDData;//현재 RFID
 
 int checkret;
+int SterilantCheckDay;
+
 
 void InitRFID(void)
 {
@@ -224,13 +226,36 @@ uint32_t ReadRFID(void)
 	else{
 		ret=1;
 		checkret=1;
+		unsigned char CurrentRFID_data[4] = {RFIDData.production_year, RFIDData.production_month, RFIDData.production_day, RFIDData.production_number};
+		unsigned char ReadRFID_data[4] = {(RFIDbuffer[6]-'0')*10+(RFIDbuffer[7]-'0'),(RFIDbuffer[8]-'0')*10+(RFIDbuffer[9]-'0'), (RFIDbuffer[10]-'0')*10+(RFIDbuffer[11]-'0'), (RFIDbuffer[12]-'0')*10+(RFIDbuffer[13]-'0')};
 
-		RFIDData.production_year=(RFIDbuffer[6]-'0')*10+(RFIDbuffer[7]-'0');
-		RFIDData.production_month=(RFIDbuffer[8]-'0')*10+(RFIDbuffer[9]-'0');
-		RFIDData.production_day=(RFIDbuffer[10]-'0')*10+(RFIDbuffer[11]-'0');
-		RFIDData.production_number=(RFIDbuffer[12]-'0')*10+(RFIDbuffer[13]-'0');
+		if (is_same(CurrentRFID_data, ReadRFID_data, 4)){
+
+		}
+		else{
+			RFIDData.production_year=(RFIDbuffer[6]-'0')*10+(RFIDbuffer[7]-'0');
+			RFIDData.production_month=(RFIDbuffer[8]-'0')*10+(RFIDbuffer[9]-'0');
+			RFIDData.production_day=(RFIDbuffer[10]-'0')*10+(RFIDbuffer[11]-'0');
+			RFIDData.production_number=(RFIDbuffer[12]-'0')*10+(RFIDbuffer[13]-'0');
+			RFIDData.volume=(RFIDbuffer[3]-'0')*100+(RFIDbuffer[4]-'0')*10+(RFIDbuffer[5]-'0');
+			GetTime();
+			RFIDData.open_year = bcd2bin(today_date.year);
+			RFIDData.open_month= bcd2bin(today_date.month);
+			RFIDData.open_day = bcd2bin(today_date.day);
+		}
+
+
 	}
 	return ret;
+}
+
+bool is_same(unsigned char a[], unsigned char b[], int length){
+    for (int i = 0; i < length; i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**

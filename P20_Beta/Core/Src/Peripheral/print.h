@@ -8,6 +8,9 @@
 #ifndef SRC_PERIPHERAL_PRINT_H_
 #define SRC_PERIPHERAL_PRINT_H_
 
+extern int autoprintFlag;
+extern int printcopy;
+extern int printgraphFlag;
 
 void printSterilant();
 void printmain();

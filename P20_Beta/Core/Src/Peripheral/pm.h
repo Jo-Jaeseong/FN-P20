@@ -11,9 +11,6 @@
 extern unsigned int CarbonFilterMax, HEPAFilterMax, PlasmaAssyMax;
 extern unsigned int CarbonFilter, HEPAFilter, PlasmaAssy;
 
-extern unsigned int tempCarbonFilterMax, tempHEPAFilterMax, tempPlasmaAssyMax;
-extern unsigned int tempCarbonFilter, tempHEPAFilter, tempPlasmaAssy;
-
 extern unsigned int totalCount, dailyCount;
 
 

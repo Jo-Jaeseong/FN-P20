@@ -18,6 +18,8 @@
 #include "process.h"
 #include "rfid.h"
 #include "usbmemory.h"
+#include "reservationsystem.h"
+
 
 
 #endif /* SRC_PERIPHERAL_PERIPHERAL_H_ */

@@ -9,7 +9,5 @@
 #define SRC_HARDWARE_PLASMA_H_
 
 void Plasma(int onoff);
-void PlasmaControlSetting();
-void PlasmaControl();
 
 #endif /* SRC_HARDWARE_PLASMA_H_ */

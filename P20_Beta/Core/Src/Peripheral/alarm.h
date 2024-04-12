@@ -8,6 +8,10 @@
 #ifndef SRC_PERIPHERAL_ALARM_H_
 #define SRC_PERIPHERAL_ALARM_H_
 
+
+extern int ErrorCheckFlag;
+extern int AlarmCheckFlag;
+
 int Before_CycleAlarm_Check();
 void Sterilant_Check();
 void Alarm_Check();

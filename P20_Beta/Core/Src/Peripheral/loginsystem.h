@@ -8,6 +8,9 @@
 #ifndef SRC_PERIPHERAL_LOGINSYSTEM_H_
 #define SRC_PERIPHERAL_LOGINSYSTEM_H_
 
+extern unsigned int CurrentUser;
+extern int Select_ID;
+
 //아이디 생성
 int createUser();
 int loginProcess();

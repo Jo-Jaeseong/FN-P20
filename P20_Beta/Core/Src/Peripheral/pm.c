@@ -11,9 +11,6 @@
 unsigned int CarbonFilterMax, HEPAFilterMax, PlasmaAssyMax;
 unsigned int CarbonFilter, HEPAFilter, PlasmaAssy;
 
-unsigned int tempCarbonFilterMax, tempHEPAFilterMax, tempPlasmaAssyMax;
-unsigned int tempCarbonFilter, tempHEPAFilter, tempPlasmaAssy;
-
 unsigned int totalCount, dailyCount;
 
 
@@ -41,7 +38,7 @@ void TotalCyle_Count(){
 	totalCount++;
 }
 void DailyCyle_Count(){
-	dailyCount++;
+		dailyCount++;
 }
 void DailyCyle_Reset(){
 	dailyCount=0;

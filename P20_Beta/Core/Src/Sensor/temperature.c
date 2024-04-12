@@ -35,8 +35,6 @@ float Temperature[5];
 int DoorSettingTemp[3], ChamberSettingTemp[3], ChamberBackSettingTemp[3], VaporizerSettingTemp[3];
 int CalibrationTemp[4];
 
-extern int ProcessNum,StepNum;
-
 // ------------------- Functions -------------------
 
 uint8_t max6675ReadReg(uint16_t *reg, int Channel)
