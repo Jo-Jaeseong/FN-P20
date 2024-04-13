@@ -373,9 +373,13 @@ void Read_Flash(){
 			flash_PW[j][i]=userdata[FLASHPW+i+10*j];
 		}
 	}
+	if(flash_ID[0][0]==0){
+		sprintf(flash_ID[0],"USER1");
+		sprintf(flash_PW[0],"1234");
+	}
 	flashuserCount=userdata[FLASHUSERCOUNT];
 	if(flashuserCount<=0){
-		flashuserCount=0;
+		flashuserCount=1;
 	}
 
 	/*세팅*///(39)
@@ -463,7 +467,7 @@ void Read_Flash(){
 	perispeed[1]=userdata[PERISPEED_DATA+1];
 	perispeed[2]=userdata[PERISPEED_DATA+2];
 	if(perispeed[0]==0){
-		perispeed[0]=5;
+		perispeed[0]=10;
 	}
 
 	//캘리브레이션 데이터 저장

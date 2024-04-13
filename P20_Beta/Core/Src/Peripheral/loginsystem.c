@@ -31,6 +31,9 @@ char inputCreatePW2[10];
 unsigned char master_ID[10]="CBT";
 unsigned char master_PW[10]="1234";
 
+unsigned char admin_ID[10]="ADMIN";
+unsigned char admin_PW[10]="1234";
+
 char inputloginID[10];
 char inputloginPW[10];
 
@@ -87,6 +90,11 @@ int loginProcess() {
 		CurrentUser=10;
         return 1;
 	}
+	else 	if (strcmp(admin_ID, inputloginID) == 0 && strcmp(admin_PW, inputloginPW) == 0){
+		CurrentUser=9;
+        return 1;
+	}
+
     for (int i = 0; i < flashuserCount; i++) {
         if (strcmp(flash_ID[i], inputloginID) == 0 && strcmp(flash_PW[i], inputloginPW) == 0) {
         	CurrentUser=i;

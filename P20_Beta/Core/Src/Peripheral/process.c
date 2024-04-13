@@ -947,7 +947,15 @@ void ProcessEndTimer(void){
 				DisplayPage4Char(0x25,0x44,"FAIL");	//결과값
 			}
 			TestCompleteFlag=1;
-			DisplayPage(LCD_USER_LEAKTEST_PAGE);
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_USER_LEAKTEST_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_USER_LEAKTEST_PAGE+50);
+        	}
+        	else{
+        		DisplayPage(LCD_USER_LEAKTEST_PAGE+60);
+        	}
 		}
 	}
 
@@ -1105,6 +1113,15 @@ void ProcessEndTimer(void){
 			TestMode=0;
 			TestCompleteFlag=0;
 			Display25page();
+	       	if(CurrentUser==10){
+				DisplayPage(LCD_USER_LEAKTEST_PAGE);
+			}
+			else if(CurrentUser==9){
+				DisplayPage(LCD_USER_LEAKTEST_PAGE+50);
+			}
+			else{
+				DisplayPage(LCD_USER_LEAKTEST_PAGE+60);
+			}
 		}
 	}
 	EndTimer_Flag = 0;

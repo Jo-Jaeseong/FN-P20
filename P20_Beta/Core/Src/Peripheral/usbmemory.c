@@ -309,8 +309,17 @@ void fprintCycelData(){
 	else{
 		f_printf(&USBHFile,"Cycle Status  :  ERROR%02d        \n",errorcode);
 	}
-	f_printf(&USBHFile,"Operator ID   :  %c%c%c%c%c%c%c%c%c%c\n",flash_ID[CurrentUser][0],flash_ID[CurrentUser][1],flash_ID[CurrentUser][2],
-			flash_ID[CurrentUser][3],flash_ID[CurrentUser][4],flash_ID[CurrentUser][5],flash_ID[CurrentUser][6],flash_ID[CurrentUser][7],flash_ID[CurrentUser][8],flash_ID[CurrentUser][9]);
+
+	if(CurrentUser==10){
+		f_printf(&USBHFile,"Operator ID   :  CBT            \n");
+	}
+	else if(CurrentUser==9){
+		f_printf(&USBHFile,"Operator ID   :  ADMIN          \n");
+	}
+	else{
+		f_printf(&USBHFile,"Operator ID   :  %c%c%c%c%c%c%c%c%c%c\n",flash_ID[CurrentUser][0],flash_ID[CurrentUser][1],flash_ID[CurrentUser][2],
+					flash_ID[CurrentUser][3],flash_ID[CurrentUser][4],flash_ID[CurrentUser][5],flash_ID[CurrentUser][6],flash_ID[CurrentUser][7],flash_ID[CurrentUser][8],flash_ID[CurrentUser][9]);
+	}
 	//f_printf(&USBHFile,"Approved by   :                 \n");
 }
 

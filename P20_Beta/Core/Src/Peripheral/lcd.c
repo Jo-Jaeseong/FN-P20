@@ -68,18 +68,17 @@ extern unsigned int DataCounter;
 
 void InitLCD(void){	//LCD 초기화
 	HAL_Delay(500);
-	//DisplayFirstPage();
+	DisplayFirstPage();
 	//DisplayPage8Char(0x12,0x01,"COMPLETE");
 	//DisplayPage8Char(0x12,0x01,"ERROR01");
 	//DisplayPage8Char(0x34,0x01,"  SHORT ");
 	//DisplayPage8Char(0x34,0x01,"STANDARD");
-	DisplayPage(22);
+	//DisplayPage(22);
 	HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 	SetRTCFromLCD();
     //Start_Page
 	HAL_Delay(100);
     HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
-    DisplayPage10Char(0x05,0x10,"             ");
 }
 
 void ReadLCD(){
@@ -581,20 +580,46 @@ void DoActionButton(int key){	//00xx
 
             break;
         case 2:	//LOGIN BUTTON
-        	DisplayPage(LCD_HOME_PAGE);
+        	VacuumPump(0);
+			InjectionValve(0);
+			VacuumValve(0);
+			VentValve(0);
+			Plasma(0);
         	Display05page();
+        	DisplayPage(LCD_HOME_PAGE);
         	break;
 
         case 0x11:
-        	Display21page();
-        	DisplayPage(LCD_INFO_INFORMATION_PAGE);
+        	VacuumPump(0);
+			InjectionValve(0);
+			VacuumValve(0);
+			VentValve(0);
+			Plasma(0);
+    		Display21page();
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_INFO_INFORMATION_PAGE);
+    		}
+        	else if(CurrentUser==9){
+           		DisplayPage(LCD_INFO_INFORMATION_PAGE+50);
+        	}
+        	else{
+      			DisplayPage(LCD_INFO_INFORMATION_PAGE+60);
+        	}
         	break;
         case 0x12:
         	Display22page();
-        	DisplayPage(LCD_INFO_STERILANT_PAGE);
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_INFO_STERILANT_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_INFO_STERILANT_PAGE+50);
+        	}
+        	else{
+				DisplayPage(LCD_INFO_STERILANT_PAGE+60);
+        	}
         	break;
         case 0x13:
-        	DisplayPage(LCD_INFO_HISTORY_PAGE);
+        	Display23page();
         	inputyear=0;
         	inputmonth=0;
         	inputday=0;
@@ -606,33 +631,90 @@ void DoActionButton(int key){	//00xx
 			DisplaySelectIcon(3,0);
 			DisplaySelectIcon(4,0);
 			DisplaySelectIcon(5,0);
-
-        	Display23page();
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_INFO_HISTORY_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_INFO_HISTORY_PAGE+50);
+        	}
+        	else{
+				DisplayPage(LCD_INFO_HISTORY_PAGE+60);
+        	}
         	break;
+
         case 0x21:
-        	DisplayPage(LCD_USER_SETTING_PAGE);
+        	VacuumPump(0);
+			InjectionValve(0);
+			VacuumValve(0);
+			VentValve(0);
+			Plasma(0);
         	Display24page();
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_USER_SETTING_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_USER_SETTING_PAGE+50);
+        	}
+        	else{
+        		DisplayPage(LCD_USER_SETTING_PAGE+60);
+        	}
         	break;
         case 0x22:
         	TestCompleteFlag=0;
         	Display25page();
         	DisplayTime(0x25,0x50,(60*10+15)*100);
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_USER_LEAKTEST_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_USER_LEAKTEST_PAGE+50);
+        	}
+        	else{
+        		DisplayPage(LCD_USER_LEAKTEST_PAGE+60);
+        	}
         	break;
         case 0x23:
         	TestCompleteFlag=0;
         	Display26page();
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_USER_HEATINGTEST_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_USER_HEATINGTEST_PAGE+50);
+        	}
+        	else{
+        		DisplayPage(LCD_USER_HEATINGTEST_PAGE+60);
+        	}
         	break;
         case 0x24:
         	TestCompleteFlag=0;
         	Display27page();
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_USER_PARTTEST_PAGE);
+    		}
+        	else if(CurrentUser==9){
+        		DisplayPage(LCD_USER_PARTTEST_PAGE+50);
+        	}
+        	else{
+        		DisplayPage(LCD_USER_PARTTEST_PAGE+60);
+        	}
 			break;
 
         case 0x31:
-        	DisplayPage(LCD_ADMIN_PMSCHEDULE_PAGE);
+        	VacuumPump(0);
+			InjectionValve(0);
+			VacuumValve(0);
+			VentValve(0);
+			Plasma(0);
         	Display28page();
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_ADMIN_PMSCHEDULE_PAGE);
+    		}
+        	else{
+        		DisplayPage(LCD_ADMIN_PMSCHEDULE_PAGE+50);
+        	}
         	break;
         case 0x32:
-			DisplayPage(LCD_ADMIN_PARTSTEST_PAGE);
 			VacuumPump(0);
 			InjectionValve(0);
 			VacuumValve(0);
@@ -640,6 +722,12 @@ void DoActionButton(int key){	//00xx
 			Plasma(0);
         	//다른 화면으로 이동할때 초기화 추가해야함
 			//중요
+        	if(CurrentUser==10){
+        		DisplayPage(LCD_ADMIN_PARTSTEST_PAGE);
+    		}
+        	else{
+        		DisplayPage(LCD_ADMIN_PARTSTEST_PAGE+50);
+        	}
 			break;
 
 
@@ -1352,7 +1440,7 @@ void LCD_25(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					TestModeStart(1);
-					DisplayPage(59);
+					DisplayPage(LCD_USER_LEAKTEST_RUNNING_PAGE);
 					break;
 				case 0x02 :
 					if(TestMode==1){
@@ -2744,6 +2832,9 @@ void Display05page(){
 	if(CurrentUser==10){
 		DisplayPage10Char(0x05,0x10,"CBT          ");
 	}
+	else if(CurrentUser==9){
+		DisplayPage10Char(0x05,0x10,"ADMIN        ");
+	}
 	else{
 		DisplayPage10Char(0x05,0x10,flash_ID[CurrentUser]);
 	}
@@ -2962,7 +3053,7 @@ void Display25page(){
 		DisplayPage4Char(0x25,0x40,"");
 		DisplayPage4Char(0x25,0x44,"");
 	}
-	DisplayPage(LCD_USER_LEAKTEST_PAGE);
+	//DisplayPage(LCD_USER_LEAKTEST_PAGE);
 
 	//DisplayTempValues();
 	//출력값
@@ -2986,9 +3077,6 @@ void Display26page(){
 		DisplayPage4Char(0x26,0x20,"");
 	}
 	DisplayTempValues();
-
-	DisplayPage(LCD_USER_HEATINGTEST_PAGE);
-
 	//출력값
 	/*
 	테스트 시간
@@ -3010,8 +3098,6 @@ void Display27page(){
 		DisplayPage4Char(0x27,0x28,"");
 		DisplayPage4Char(0x27,0x2C,"");
 	}
-	DisplayPage(LCD_USER_PARTTEST_PAGE);
-
 	//출력값
 	/*
 	INJECTION VALVE RESULT
