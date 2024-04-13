@@ -35,7 +35,7 @@
 
 extern int checkret;
 int Alarmcode=0;
-unsigned char devicealarm[15]={};
+unsigned char devicealarm[16]={};
 
 
 int ErrorCheckFlag;
@@ -51,12 +51,13 @@ int Before_CycleAlarm_Check(){
 		devicealarm[2]=1;
 	}
 
-	if(BottleCheck()){
+	if(checkret==1){
 		devicealarm[3]=0;
 	}
 	else{
 		devicealarm[3]=1;
 	}
+
 
 	if(BottleDoorCheck()){
 		devicealarm[4]=0;
@@ -73,17 +74,15 @@ int Before_CycleAlarm_Check(){
 		devicealarm[5]=0;
 	}
 	//멸균제 제조 기간 확인
-	GetTime();
-	if((365-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),
-			(int)RFIDData.production_year,(int)RFIDData.production_month,(int)RFIDData.production_day))>0){
+	if(RFIDData.expiry_day>=0){
 		devicealarm[6]=0;
 	}
 	else{
 		devicealarm[6]=1;
 	}
 	//멸균제 장착 기간 확인
-	if((60-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),
-			RFIDData.production_year,RFIDData.open_month,RFIDData.open_day))>0){
+	GetTime();
+	if(check_expiry(RFIDData, today_date)){
 		devicealarm[7]=0;
 	}
 	else{
@@ -139,15 +138,26 @@ int Before_CycleAlarm_Check(){
 		devicealarm[14]=0;
 	}
 	devicealarm[0]=0;
-	for(int i=1;i<15;i++){
+	if(LevelSensor1Check()){
+		devicealarm[15]=0;
+	}
+	else{
+		RFIDData.volume=0;
+		devicealarm[15]=1;
+	}
+
+	for(int i=1;i<16;i++){
 		devicealarm[0]+=devicealarm[i];
 	}
+
+
+
 	return devicealarm[0];
 
 }
 
 void Sterilant_Check(){
-	if(BottleCheck()){
+	if(checkret==1){
 		devicealarm[3]=0;
 	}
 	else{
@@ -169,17 +179,15 @@ void Sterilant_Check(){
 		devicealarm[5]=0;
 	}
 	//멸균제 제조 기간 확인
-	GetTime();
-	if((365-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),
-			(int)RFIDData.production_year,(int)RFIDData.production_month,(int)RFIDData.production_day))>0){
+	if(RFIDData.expiry_day>=0){
 		devicealarm[6]=0;
 	}
 	else{
 		devicealarm[6]=1;
 	}
 	//멸균제 장착 기간 확인
-	if((60-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),
-			flash_sterilant_open_year,RFIDData.open_month,RFIDData.open_day))>0){
+	GetTime();
+	if(check_expiry(RFIDData, today_date)){
 		devicealarm[7]=0;
 	}
 	else{
@@ -290,6 +298,12 @@ void Alarm_Check(){
 		char msg[80] = "The plasma ASSY has expired.";
 		DisplayMsg(0x07,0x30,msg);
 	}
+	else if(devicealarm[15]==1){
+		DisplayPage10Char(0x07,0x10," ALARM015 ");
+		DisplayPage10Char(0x07,0x20,"NO LIQUID1");
+		char msg[80] = "Please replace the sterilizer.";
+		DisplayMsg(0x07,0x30,msg);
+	}
 
 }
 
@@ -378,7 +392,7 @@ void DeviceErrorProcess(){
 				else{
 
 				}
-				if(ErrorCheckFlag){
+				if(ErrorCheckFlag==1){
 					DisplayPage(LCD_EORROR_POPUP_PAGE);
 					ErrorEndProcess();
 					deviceerror[0]=0;
@@ -444,7 +458,7 @@ void DeviceErrorProcess(){
 
 				}
 				//테스트
-				if(ErrorCheckFlag){
+				if(ErrorCheckFlag==1){
 					ErrorEndProcess();
 					deviceerror[0]=0;
 					StopFlag=1;

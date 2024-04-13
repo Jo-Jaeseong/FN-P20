@@ -199,6 +199,61 @@ void InitRFID(void)
 	MFRC522_Setup('A');
 }
 
+void RFIDCheck(){
+	InitRFID();
+	ReadRFID();
+	if(checkret==-2){//11.04추가
+		for(int i=0;i<3;i++){
+			ReadRFID();
+			if(checkret==1){
+				break;
+			}
+		}
+	}
+	else if(checkret=1){
+		Write_Flash();
+		DisplayPage(currentpage);
+	}
+	DisplaySterilantData();
+}
+
+
+int is_leap_year(unsigned int year) {
+    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+}
+
+void add_days_to_date() {
+    unsigned int days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int openyear=RFIDData.open_year;
+    int openmonth=RFIDData.open_month;
+    int openday=RFIDData.open_day;
+
+    if (is_leap_year(openyear)) {
+        days_in_month[1] = 29; // 윤년인 경우 2월을 29일로 설정
+    }
+
+    openday += SterilantCheckDay;
+    while (openday > days_in_month[openmonth - 1]) {
+    	openday -= days_in_month[openmonth - 1];
+        openmonth++;
+        if (openmonth > 12) {
+            openmonth = 1;
+            openyear++;
+            if (is_leap_year(openyear)) {
+                days_in_month[1] = 29; // 윤년 업데이트
+            } else {
+                days_in_month[1] = 28;
+            }
+        }
+    }
+
+
+	RFIDData.expiry_year=openyear;
+	RFIDData.expiry_month=openmonth;
+	RFIDData.expiry_day=openday;
+}
+
+
 	uint8_t RFIDbuffer[20] = "";
 
 uint32_t ReadRFID(void)
@@ -242,6 +297,22 @@ uint32_t ReadRFID(void)
 			RFIDData.open_year = bcd2bin(today_date.year);
 			RFIDData.open_month= bcd2bin(today_date.month);
 			RFIDData.open_day = bcd2bin(today_date.day);
+
+			int expipry_check=365-calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),(int)RFIDData.production_year,(int)RFIDData.production_month,(int)RFIDData.production_day);
+			if(expipry_check>=SterilantCheckDay){
+				add_days_to_date();
+			}
+			else if((expipry_check<SterilantCheckDay)&&(expipry_check>=0)){
+				RFIDData.expiry_year=RFIDData.production_year+1;
+				RFIDData.expiry_month=RFIDData.production_month;
+				RFIDData.expiry_day=RFIDData.production_day;
+			}
+			else{
+				RFIDData.expiry_year=0;
+				RFIDData.expiry_month=0;
+				RFIDData.expiry_day=-1;
+			}
+
 		}
 
 

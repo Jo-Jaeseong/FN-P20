@@ -8,10 +8,6 @@
 #ifndef PERIPHERAL_RFID_H_
 #define PERIPHERAL_RFID_H_
 
-#include "main.h"
-#include "Process.h"
-#include "rfid.h"
-
 struct RFID_format {
 	/*
 	시리얼 넘버(생산일자+생산숫자)
@@ -23,14 +19,15 @@ struct RFID_format {
 	unsigned int production_year, production_month, production_day;
 	unsigned int production_number;
 	unsigned int open_year, open_month, open_day;
+	unsigned int expiry_year, expiry_month, expiry_day;
 	unsigned int volume, volumemax;
-	unsigned int elapsed_days;
 };
 
 extern struct RFID_format RFIDData;
 extern int checkret;
 extern int SterilantCheckDay;
 
+void RFIDCheck();
 bool is_same(unsigned char a[], unsigned char b[], int length);
 void InitRFID(void);
 uint32_t ReadRFID(void);

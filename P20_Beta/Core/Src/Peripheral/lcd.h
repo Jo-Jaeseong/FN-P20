@@ -23,6 +23,8 @@
 #define LCD_EORROR_POPUP_PAGE							13
 #define LCD_EORROR_WAIT_PAGE							14
 
+#define LCD_MONITOR_EORROR_WAIT_PAGE					16
+
 
 
 #define LCD_INFO_INFORMATION_PAGE						21
@@ -61,12 +63,15 @@
 
 #define LCD_FACTORY_CONTROLTEST_PAGE					60
 #define LCD_FACTORY_VACUUM_CALIBRATION_PAGE				62
+
+#define LCD_DOOROPENPROCESS_PAGE						88
+#define LCD_DOOROPENMESSAGE_PAGE						89
 #define LCD_LOADING_PAGE								90
 
 extern int currentpage;
 extern int beforepage;
 
-extern unsigned char beforeday;
+extern int beforeday;
 
 struct date_format {
 	unsigned char year, month, day;
@@ -78,6 +83,7 @@ extern struct date_format today_date;
 extern unsigned char LCD_rx_data[30];
 
 void InitLCD();
+void ReadLCD();
 void DisplayFirstPage();
 void DisplayPage();
 
@@ -94,8 +100,6 @@ void LCD_09(int index, int value);
 void LCD_10(int index, int value);
 void LCD_11(int index, int value);
 void LCD_12(int index, int value);
-void LCD_13(int index, int value);
-void LCD_14(int index, int value);
 
 void LCD_21(int index, int value);
 void LCD_22(int index, int value);
@@ -202,8 +206,8 @@ void SetRTCFromLCD();
 
 void ReadInforDataFromLCD();
 
-void DisplayTemprature();
 void DisplayIcons();
+void DisplaySterilantData();
 
 
 unsigned char hex2bcd (unsigned char x);

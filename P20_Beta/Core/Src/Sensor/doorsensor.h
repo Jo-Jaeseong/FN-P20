@@ -9,6 +9,8 @@
 #define SRC_SENSOR_DOORSENSOR_H_
 
 extern int DoorOpenFlag;
+extern int DoorOpenVentFlag;
+extern int DoorOpenVentCnt;
 
 int DoorHandleCheck();
 int DoorLatchCheck();

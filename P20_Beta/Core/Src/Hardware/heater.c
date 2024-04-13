@@ -11,7 +11,7 @@
 
 int temperror[5]={};
 
-int TestTempErrorValue=1;
+int TestTempErrorValue;
 
 
 /*
@@ -117,7 +117,6 @@ void VaporizerHeaterControl(int Temp){
 }
 
 void HeaterControl(){
-
 	switch (HeaterControlMode) {
 		case 0:	//컨트롤 안함
 			break;

@@ -172,18 +172,36 @@ void printInformation(){
 	sprintf(pinrtdata,"LANGUAGE      :  %s\n",flash_LANGUAGE);
 	printmsg(pinrtdata);
 
-	GetTime();
-	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-	if(elapsed_days<=0){
-		elapsed_days=0;
-	}
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  %02d\n",SterilantCheckDay-elapsed_days);
-	printmsg(pinrtdata);
+	if(RFIDData.open_day==0){
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Expiry Date   :  0000-0000-0000\n");
+		printmsg(pinrtdata);
 
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",RFIDData.volume);
-	printmsg(pinrtdata);
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Remain H2O2   :   0\n");
+		printmsg(pinrtdata);
+	}
+	else{
+		if(RFIDData.expiry_day==-1){
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Expiry Date   :  0000-0000-0000\n");
+			printmsg(pinrtdata);
+
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Remain H2O2   : %3d\n",RFIDData.volume);
+			printmsg(pinrtdata);
+		}
+		else{
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Expiry Date   :  20%2d-%02d-%02d\n",RFIDData.expiry_year,RFIDData.expiry_month,RFIDData.expiry_day);
+			printmsg(pinrtdata);
+
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Remain H2O2   : %3d\n",RFIDData.volume);
+			printmsg(pinrtdata);
+		}
+
+	}
 
 	printmsg("--------------------------------\n");
     print_printnfeed();
@@ -201,23 +219,44 @@ void printSterilant(){
 	sprintf(pinrtdata,"SERIAL NO     :  %02d%02d%02d%02d\n",RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
 	printmsg(pinrtdata);
 
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-	printmsg(pinrtdata);
+	if(RFIDData.open_day==0){
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Loading Date  :  0000-0000-0000\n");
+		printmsg(pinrtdata);
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Expiry Date   :  0000-0000-0000\n");
+		printmsg(pinrtdata);
 
-	GetTime();
-	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-	if(elapsed_days<=0){
-		elapsed_days=0;
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Remain H2O2   :   0\n");
+		printmsg(pinrtdata);
 	}
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  %02d\n",SterilantCheckDay-elapsed_days);
-	printmsg(pinrtdata);
+	else{
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
+		printmsg(pinrtdata);
 
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",RFIDData.volume);
-	printmsg(pinrtdata);
 
+		if(RFIDData.expiry_day==-1){
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Expiry Date   :  0000-0000-0000\n");
+			printmsg(pinrtdata);
+
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Remain H2O2   : %3d\n",RFIDData.volume);
+			printmsg(pinrtdata);
+		}
+		else{
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Expiry Date   :  20%2d-%02d-%02d\n",RFIDData.expiry_year,RFIDData.expiry_month,RFIDData.expiry_day);
+			printmsg(pinrtdata);
+
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Remain H2O2   : %3d\n",RFIDData.volume);
+			printmsg(pinrtdata);
+		}
+
+	}
 	printmsg("--------------------------------\n");
     print_printnfeed();
     doprint();
@@ -428,11 +467,11 @@ void LoadCyclePrint(){
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  %02d\n",SterilantCheckDay-loadRFIDData.elapsed_days);
+	sprintf(pinrtdata,"Expiry Date   :  20%2d-%02d-%02d\n",(int)loadRFIDData.expiry_year,(int)loadRFIDData.expiry_month,(int)loadRFIDData.expiry_day);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2   :  %02d\n",loadRFIDData.volume);
+	sprintf(pinrtdata,"Remain H2O2   :  %3d\n",loadRFIDData.volume);
 	printmsg(pinrtdata);
 	printmsg("--------------------------------\n");
 
@@ -737,25 +776,47 @@ void CyclePrint(){
 	printmsg("--------------------------------\n");
 	printmsg("Sterilant                       \n");
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"SERIAL NO    : %02d%02d%02d%02d\n",RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
+	sprintf(pinrtdata,"SERIAL NO     :  %02d%02d%02d%02d\n",RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
 	printmsg(pinrtdata);
 
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Loading Date : 20%2d-%02d-%02d\n",RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-	printmsg(pinrtdata);
+	if(RFIDData.open_day==0){
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Loading Date  :  0000-0000-0000\n");
+		printmsg(pinrtdata);
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Expiry Date   :  0000-0000-0000\n");
+		printmsg(pinrtdata);
 
-	GetTime();
-	int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-	if(elapsed_days<=0){
-		elapsed_days=0;
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Remain H2O2   :   0\n");
+		printmsg(pinrtdata);
 	}
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date  :  %02d\n",SterilantCheckDay-elapsed_days);
-	printmsg(pinrtdata);
+	else{
+		memset(pinrtdata,0,40);
+		sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
+		printmsg(pinrtdata);
 
-	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2  :  %02d\n",RFIDData.volume);
-	printmsg(pinrtdata);
+
+		if(RFIDData.expiry_day==-1){
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Expiry Date   :  0000-0000-0000\n");
+			printmsg(pinrtdata);
+
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Remain H2O2   : %3d\n",RFIDData.volume);
+			printmsg(pinrtdata);
+		}
+		else{
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Expiry Date   :  20%2d-%02d-%02d\n",RFIDData.expiry_year,RFIDData.expiry_month,RFIDData.expiry_day);
+			printmsg(pinrtdata);
+
+			memset(pinrtdata,0,40);
+			sprintf(pinrtdata,"Remain H2O2   : %3d\n",RFIDData.volume);
+			printmsg(pinrtdata);
+		}
+
+	}
 	printmsg("--------------------------------\n");
 	if(CycleName==1){
 		printmsg("Selected Cycle:  Short          \n");
@@ -1024,7 +1085,7 @@ void CyclePrint(){
 	//flash_ID[CurrentUser][];
 	printmsg("Approved by   :                 \n");
 
-    if(printgraphFlag){
+    if(printgraphFlag==1){
         doprint();
     	printtestgraph(CycleName);
     }

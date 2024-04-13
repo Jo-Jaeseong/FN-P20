@@ -112,11 +112,11 @@ int ProcessNum,StepNum;
 
 
 void loop(){
+
 	if(UART_Receive_Flag) {
 		UART_Receive_Flag = 0;
 		LCD_Process();
 	}
-
 	if(Timer_DeliSecond_Flag) {
 	  Timer_DeliSecond_Flag=0;
 	  DeliSecondProcess();
@@ -136,14 +136,12 @@ void loop(){
 
 void DeliSecondProcess(void){
 	GetValue();
-	DisplayVacuumSensor();
 	//printf("max:4095, min:3500, data1:%d, data2:%d, data3:%d  \n",data1/10, Pressure, Pressure2);
 }
 int tempcnt=0;
 
 void HalfSecondProcess(void){
-	//GetValue();
-	ValueFilter();
+	//온도 측정
 	Check_Temp(tempcnt);
 	if(tempcnt>=3){
 		tempcnt=0;
@@ -151,11 +149,15 @@ void HalfSecondProcess(void){
 	else{
 		tempcnt++;
 	}
-	DisplayTemprature();
-	DisplayIcons();
 
-	//도어 오픈
+	//압력 보정
+	ValueFilter();
+	DisplayVacuumSensor();
+
 	if(Running_Flag==0){
+		DisplayIcons();
+
+		//도어 오픈
 		if(DoorOpenFlag==1){
 			if(DoorLatchCheck()){
 				DoorLatch(1);
@@ -172,6 +174,19 @@ void HalfSecondProcess(void){
 			DoorOpenFlag=0;
 		}
 		DoorOpenFlag=DoorOpenProcess();
+		if(DoorOpenVentFlag==1){
+			if(DoorOpenVentCnt>=0){
+				DoorOpenVentCnt--;
+				VentValve(1);
+			}
+			else{
+				DoorOpenVentCnt=0;
+				DoorOpenVentFlag=0;
+				VentValve(0);
+				DoorOpenFlag=1;
+	        	DisplayPage(beforepage);
+			}
+		}
 	}
 
 	if(LevelSensor2Check()){
@@ -190,7 +205,9 @@ void HalfSecondProcess(void){
 	if(TestMode==1||TestMode==9){
 		DisplayTime(0x25,0x50,EndTestTimeCounter);
 	}
-
+	if(Running_Flag){
+		ReadLCD();
+	}
 	HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
 }
 
@@ -274,6 +291,9 @@ void OneSecondProcess(void){
 	if(HeaterControlMode==1){
 		HeaterControl();
 	}
+	else if(HeaterControlMode==2){
+		HeaterControl();
+	}
 }
 
 void Init_Device(){
@@ -283,6 +303,7 @@ void Init_Device(){
     Read_Flash();
     //Read_Setting_Data_Flash();
 	InitLCD();
+	RFIDCheck();
 }
 
 void Inithardware(){
@@ -321,8 +342,6 @@ void Start(){
 	TensecondCounter=0;
 	PressureData[0]=Pressure;
 	TemperatureData[0]=Temperature[1];
-	TotalCyle_Count();
-	DailyCyle_Count();
 
 	Select_NORMAL_MODE=1;
 	Running_Flag=1;
@@ -347,11 +366,29 @@ void Start(){
 	PeriPump(0);
 	p_data.cyclename=CycleName;
 	GetStartTime();
+
+	//데일리 카운트 초기화
+	if(beforeday!=bcd2bin(p_data.day)){
+		beforeday=bcd2bin(p_data.day);
+		dailyCount=0;
+	}
+
+	DailyCyle_Count();
+	TotalCyle_Count();
+	DisplayPageValue(0x21,0x20,dailyCount);
+	DisplayPageValue(0x21,0x10,totalCount);
+
+
 	InitData();
+	DisplayNormalValues();
+	Write_Flash();//테스트중
 }
 
 void Stop(){
 	deviceerror[1]=1;
+	DisplayPage8Char(0x13,0x01,"ERROR01");
+	DisplayPage8Char(0x12,0x01,"ERROR01");
+	DisplayPage4Char(0x14,0x10,"01  ");
 	DisplayPage(LCD_EORROR_POPUP_PAGE);
 	ErrorEndProcess();
 	deviceerror[0]=0;
@@ -362,9 +399,6 @@ void Stop(){
 void FactoryTestStart(){
 	Select_NORMAL_MODE=0;
 	Running_Flag=1;
-	TotalCyle_Count();
-	DailyCyle_Count();
-
 	HeaterControlMode=2;
 
 	CurrentProcess=1;
@@ -385,8 +419,18 @@ void FactoryTestStart(){
 	Plasma(0);
 	PeriPump(0);
 	GetStartTime();
-	InitData();
 
+	//데일리 카운트 초기화
+	if(beforeday!=bcd2bin(p_data.day)){
+		beforeday=bcd2bin(p_data.day);
+		dailyCount=0;
+	}
+	TotalCyle_Count();
+	DailyCyle_Count();
+	DisplayPageValue(0x21,0x10,totalCount);
+	DisplayPageValue(0x21,0x20,dailyCount);
+	InitData();
+	Write_Flash();//테스트중
 }
 
 void FactoryTestStop(){
@@ -583,9 +627,8 @@ void NormalMode(){
 		GetEndTime();
 		if(autoprintFlag==1){
 			CyclePrint();
-			SaveCycleData();	//여기 확인
 		}
-
+		SaveCycleData();	//여기 확인
 		//Write_Setting_Data_Flash();
 		HAL_Delay(100);
 		//Write_Data_Flash();
@@ -622,11 +665,11 @@ void NormalMode(){
 			LiquidFlag=1;
 			PeriPump(1);
 			//볼륨 카은트
-			RFIDData.volume-=4;
+			RFIDData.volume-=2;
 			if(RFIDData.volume<=0){
 				RFIDData.volume=0;
 			}
-			DisplayPageValue(0x11,0x20,RFIDData.volume);
+			DisplaySterilantData();
 		}
 		else{
 			PeriPump(0);
@@ -700,9 +743,8 @@ void FactoryTestMode(){
 		GetEndTime();
 		if(autoprintFlag==1){
 			CyclePrint();
-			SaveCycleData();	//여기 확인
 		}
-
+		SaveCycleData();	//여기 확인
 		ReadStepTime();
 		ReadProcessTime();
 
@@ -727,11 +769,11 @@ void FactoryTestMode(){
 			LiquidFlag=1;
 			PeriPump(1);
 			//볼륨 카은트
-			RFIDData.volume-=4;
+			RFIDData.volume-=2;
 			if(RFIDData.volume<=0){
 				RFIDData.volume=0;
 			}
-			DisplayPageValue(0x11,0x20,RFIDData.volume);
+			DisplaySterilantData();
 		}
 		else{
 			PeriPump(0);
@@ -1077,8 +1119,8 @@ void GetStartTime(){
 
 }
 void GetEndTime(){
-	unsigned char week;
-	ReadRTC( &p_data.year, &p_data.month, &p_data.day, &week,
+	unsigned char year,month,day,week;
+	ReadRTC( &year, &month, &day, &week,
 			&p_data.end_hour, &p_data.end_minute, &p_data.end_second);
 }
 
@@ -1126,4 +1168,32 @@ int calculateElapsedDays(int current_year, int current_month, int current_day, i
     }
 
     return elapsed_days;
+}
+
+int check_expiry() {
+    // BCD를 바이너리 값으로 변환
+    unsigned int year = bcd2bin(today_date.year);
+    unsigned int month = bcd2bin(today_date.month);
+    unsigned int day = bcd2bin(today_date.day);
+
+    // 연도 비교
+    if (RFIDData.expiry_year < year) {
+        return 0; // 만료됨
+    } else if (RFIDData.expiry_year > year) {
+        return 1; // 만료 안됨
+    } else { // 연도가 같을 경우
+        // 월 비교
+        if (RFIDData.expiry_month < month) {
+            return 0; // 만료됨
+        } else if (RFIDData.expiry_month > month) {
+            return 1; // 만료 안됨
+        } else { // 월도 같을 경우
+            // 일 비교
+            if (RFIDData.expiry_day < day) {
+                return 0; // 만료됨
+            } else {
+                return 1; // 만료 안됨 (같거나 이후)
+            }
+        }
+    }
 }

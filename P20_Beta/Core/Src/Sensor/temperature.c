@@ -103,7 +103,7 @@ void Check_Temp(int Channel){	//SPI통신 - 모듈 온도 측정
 	if(answer == MAX6675_OK){
 		ErrorCheckTemp=max6675Temp(reg);
 		Temperature[Channel]=ErrorCheckTemp;
-		Temperature[Channel]=Temperature[Channel]+CalibrationTemp[Channel]-10;
+		Temperature[Channel]=Temperature[Channel]+CalibrationTemp[Channel]-20;
 	}
 	else{
 
@@ -111,16 +111,16 @@ void Check_Temp(int Channel){	//SPI통신 - 모듈 온도 측정
 
 	switch(Channel){
 		case 0 :
-			DisplayPageValue(0x31,0x01,Temperature[0]*10);
+			DisplayPageValue(0x60,0x01,Temperature[0]*10);
 			break;
 		case 1 :
-			DisplayPageValue(0x31,0x05,Temperature[1]*10);
+			DisplayPageValue(0x60,0x05,Temperature[1]*10);
 			break;
 		case 2 :
-			DisplayPageValue(0x31,0x09,Temperature[2]*10);
+			DisplayPageValue(0x60,0x09,Temperature[2]*10);
 			break;
 		case 3 :
-			DisplayPageValue(0x31,0x0D,Temperature[3]*10);
+			DisplayPageValue(0x60,0x0D,Temperature[3]*10);
 			break;
 	}
 }

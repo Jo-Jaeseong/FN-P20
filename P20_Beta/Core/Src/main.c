@@ -127,8 +127,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-	HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -231,12 +230,12 @@ void SystemClock_Config(void)
   */
 static void MX_NVIC_Init(void)
 {
+  /* USART1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* TIM7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(TIM7_IRQn);
-  /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(USART1_IRQn);
 }
 
 /**
@@ -590,11 +589,11 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 1;
+  htim4.Init.Prescaler = 375-1;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 20000-1;
+  htim4.Init.Period = 550-1;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
   {
     Error_Handler();
@@ -606,7 +605,7 @@ static void MX_TIM4_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 4000-1;
+  sConfigOC.Pulse = 550/2-1;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
@@ -1004,16 +1003,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		mscounter++;
 		if((mscounter % 10) == 0) {
 
-			if(Running_Flag){	//?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½ ï¿½???????ï¿½ï¿½
+			if(Running_Flag){	//?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½ ï¿???????????ï¿½ï¿½
 				TotalTime++;
 				fProcessTime[CurrentProcess]++;
-				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½?ï¿½ï¿½
+				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½?ï¿½ï¿½
 					EndTimeCounter--;	//ì¹´ìš´?ï¿½ï¿½
 					if(EndTimeCounter>30000){
 						EndTimeCounter=0;
 					}
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 						Endtime_Check_Process();
 						CurrentStep++;
 					}
@@ -1036,42 +1035,42 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				}
 			}
 			if(TestMode==1){
-				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½?ï¿½ï¿½
+				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½?ï¿½ï¿½
 					EndTimeCounter--;	//ì¹´ìš´?ï¿½ï¿½
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 					}
 					EndTestTimeCounter--;
 					if(EndTestTimeCounter == 0){
-						EndTestTimeCounter = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTestTimeCounter = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 					}
 				}
 			}
 			else if(TestMode==2){
-				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½?ï¿½ï¿½
+				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½?ï¿½ï¿½
 					EndTimeCounter--;	//ì¹´ìš´?ï¿½ï¿½
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 					}
 				}
 			}
 			else if(TestMode==3){
-				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½?ï¿½ï¿½
+				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½?ï¿½ï¿½
 					EndTimeCounter--;	//ì¹´ìš´?ï¿½ï¿½
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 					}
 				}
 			}
 			else if(TestMode==9){
-				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½?ï¿½ï¿½
+				if(EndTimer_Flag == 0){	//?ï¿½ï¿½?ï¿½ï¿½ ???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½?ï¿½ï¿½
 					EndTimeCounter--;	//ì¹´ìš´?ï¿½ï¿½
 					if(EndTimeCounter == 0){
-						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTimer_Flag = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 					}
 					EndTestTimeCounter--;
 					if(EndTestTimeCounter == 0){
-						EndTestTimeCounter = 1;	//???ï¿½ï¿½ï¿½?????? ?ï¿½ï¿½ï¿½??????
+						EndTestTimeCounter = 1;	//???ï¿½ï¿½ï¿?????????? ?ï¿½ï¿½ï¿??????????
 					}
 				}
 			}

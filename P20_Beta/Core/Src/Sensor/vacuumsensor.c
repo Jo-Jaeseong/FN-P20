@@ -83,7 +83,10 @@ void ValueFilter(){
 		Pressure2=760;
 	}
 
-	Pressure=Pressure2-10+CalibrationVacuum;
+	Pressure=Pressure2-20+CalibrationVacuum;
+	if(Pressure<0){
+		Pressure=0;
+	}
 }
 
 uint32_t movingAverageFilter(uint32_t *samples, uint8_t sampleCount) {

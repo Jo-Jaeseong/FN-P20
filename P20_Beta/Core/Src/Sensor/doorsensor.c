@@ -18,6 +18,8 @@ extern unsigned char Running_Flag;
 
 int DoorCheckcnt=0;
 int DoorOpenFlag;
+int DoorOpenVentFlag;
+int DoorOpenVentCnt;
 
 // ------------------- Functions -------------------
 

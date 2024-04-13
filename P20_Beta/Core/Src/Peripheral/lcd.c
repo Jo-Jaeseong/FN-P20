@@ -34,7 +34,7 @@ unsigned char	LCD_rx_data[30]={};
 int currentpage=0;
 int beforepage=0;
 
-unsigned char beforeday;
+int beforeday;
 
 //extern char RFIDData[4]; //확인 필요
 
@@ -47,6 +47,7 @@ float FlashSettingTemp[4][3]={};
 
 extern int PreesureCondition[3];
 int FlashPreesureCondition[3]={};
+int Flashperispeed[3];
 
 struct date_format today_date;
 
@@ -68,14 +69,21 @@ extern unsigned int DataCounter;
 void InitLCD(void){	//LCD 초기화
 	HAL_Delay(500);
 	//DisplayFirstPage();
-	DisplayPage(60);
-	//DisplayPage(LCD_INFO_HISTORY_PAGE);
+	//DisplayPage8Char(0x12,0x01,"COMPLETE");
+	//DisplayPage8Char(0x12,0x01,"ERROR01");
+	//DisplayPage8Char(0x34,0x01,"  SHORT ");
+	//DisplayPage8Char(0x34,0x01,"STANDARD");
+	DisplayPage(22);
 	HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 	SetRTCFromLCD();
     //Start_Page
 	HAL_Delay(100);
-
     HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
+    DisplayPage10Char(0x05,0x10,"             ");
+}
+
+void ReadLCD(){
+	HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 }
 
 void DisplayFirstPage(){
@@ -377,19 +385,6 @@ void LCD_Process(){
 			iValue |= LCD_rx_data[8];
 			LCD_12(LCD_rx_data[5], iValue);
 			break;
-        case 0x13 :
-			iValue = LCD_rx_data[7];
-			iValue <<= 8;
-			iValue |= LCD_rx_data[8];
-			LCD_13(LCD_rx_data[5], iValue);
-			break;
-        case 0x14 :
-			iValue = LCD_rx_data[7];
-			iValue <<= 8;
-			iValue |= LCD_rx_data[8];
-			LCD_14(LCD_rx_data[5], iValue);
-			break;
-
         case 0x21 :
 			iValue = LCD_rx_data[7];
 			iValue <<= 8;
@@ -591,12 +586,12 @@ void DoActionButton(int key){	//00xx
         	break;
 
         case 0x11:
-        	DisplayPage(LCD_INFO_INFORMATION_PAGE);
         	Display21page();
+        	DisplayPage(LCD_INFO_INFORMATION_PAGE);
         	break;
         case 0x12:
-        	DisplayPage(LCD_INFO_STERILANT_PAGE);
         	Display22page();
+        	DisplayPage(LCD_INFO_STERILANT_PAGE);
         	break;
         case 0x13:
         	DisplayPage(LCD_INFO_HISTORY_PAGE);
@@ -638,7 +633,6 @@ void DoActionButton(int key){	//00xx
         	break;
         case 0x32:
 			DisplayPage(LCD_ADMIN_PARTSTEST_PAGE);
-			DisplayRFIDNumber();
 			VacuumPump(0);
 			InjectionValve(0);
 			VacuumValve(0);
@@ -698,10 +692,7 @@ void DoActionButton(int key){	//00xx
         case 0x47:
         	Inithardware();
         	HeaterControlMode=0;
-        	//DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
-        	//여기 테스트중
-        	DisplayPage(60);
-
+        	DisplayPage(LCD_FACTORY_CONTROLTEST_PAGE);
         	break;
 
         case 0x99:
@@ -710,9 +701,25 @@ void DoActionButton(int key){	//00xx
         	HeaterControlMode=1;
         	break;
 
+        case 0xFD:	//도어 오픈 NO
+        	DisplayPage(beforepage);
+        	break;
+
+        case 0xFE:	//도어 오픈 YES
+        	DoorOpenVentFlag=1;
+			DoorOpenVentCnt=10;
+			DisplayPage(LCD_LOADING_PAGE);
+			break;
+
         case 0xFF:	//도어 오픈
         	if(Running_Flag==0){
-        		DoorOpenFlag=1;
+        		if(Pressure>DoorOpenPressure){
+        			DoorOpenFlag=1;
+        		}
+        		else{
+        			beforepage=currentpage;
+        			DisplayPage(LCD_DOOROPENMESSAGE_PAGE);
+        		}
         	}
         	break;
 
@@ -768,6 +775,7 @@ void LCD_03(int index, int value){
 							break;
 						case 1 :
 			        		Write_Flash();
+			        		Display02page();
 			        		DisplayPage(LCD_LOGIN_PAGE);
 							break;
 						case 2 :
@@ -1054,7 +1062,7 @@ void LCD_08(int index, int value){	//input Value
 						DisplayPage(LCD_RUNNING_PAGE);
 					}
 					else{
-						if(AlarmCheckFlag){
+						if(AlarmCheckFlag==1){
 							Alarm_Check();
 							DisplayPage(LCD_STANDBY_ALRAM_PAGE);
 						}
@@ -1084,13 +1092,6 @@ void LCD_09(int index, int value){	//input Value
 		        	DisplayTempGraph(DataCounter-1,0);
 		        	DisplayVacuumGraph(DataCounter-1,1);
 					break;
-				case 0x02 :
-					//STOP
-					DisplayPage(LCD_SELECT_STOP_PAGE);
-					break;
-				case 0x03 :
-					//ADVANCED MODE
-					break;
 			}
 			break;
     }
@@ -1102,9 +1103,6 @@ void LCD_10(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					Stop();
-					break;
-				case 0x02 :
-					DisplayPage(LCD_RUNNING_PAGE);
 					break;
 			}
 			break;
@@ -1148,44 +1146,6 @@ void LCD_12(int index, int value){	//input Value
     }
 }
 
-void LCD_13(int index, int value){	//input Value
-    switch(index) {
-		case 0x00 :
-			switch(value) {
-				case 0x01 :
-					//LCD_EORROR_WAIT_PAGE
-					if(CurrentProcess==5){
-						DisplayTime(0x14,0x01,ProcessTime[5]+ProcessTime[6]);
-					}
-					else if(CurrentProcess==6){
-						DisplayTime(0x14,0x01,ProcessTime[6]);
-					}
-					DisplayPage(LCD_EORROR_WAIT_PAGE);
-					break;
-			}
-			break;
-    }
-}
-
-void LCD_14(int index, int value){	//input Value
-    switch(index) {
-		case 0x00 :
-			switch(value) {
-				case 0x01 :
-					//Moniter
-					beforepage=currentpage;
-					DisplayPage(LCD_MONITOR_PAGE);
-					Display11page();
-		        	DisplayInitTempGraph();
-		        	DisplayInitVacuumGraph();
-		        	DisplayTempGraph(DataCounter-1,0);
-		        	DisplayVacuumGraph(DataCounter-1,1);
-					break;
-			}
-			break;
-    }
-}
-
 void LCD_21(int index, int value){	//input Value
     switch(index) {
 		case 0x00 :
@@ -1203,12 +1163,7 @@ void LCD_22(int index, int value){	//input Value
 		case 0x00 :
 			switch(value) {
 				case 0x01 :
-		        	InitRFID();
-		        	DisplayRFIDNumber();
-		        	if(ReadRFID()==1){
-		        		Write_Flash();
-		        		DisplayPage(currentpage);
-		        	}
+					RFIDCheck();
 					break;
 
 				case 0x03 :
@@ -1330,48 +1285,55 @@ void LCD_24(int index, int value){	//input Value
 			switch(value) {
 				case 0x01 :
 					if(AlarmCheckFlag==1){
-						AlarmCheckFlag=0;
+						AlarmCheckFlag=2;
+						DisplayIcon(0x24,0x10,0);
 					}
 					else{
 						AlarmCheckFlag=1;
+						DisplayIcon(0x24,0x10,1);
 					}
-					DisplayIcon(0x24,0x10,AlarmCheckFlag);
+
 					break;
 				case 0x02 :
 					if(ErrorCheckFlag==1){
-						ErrorCheckFlag=0;
+						ErrorCheckFlag=2;
+						DisplayIcon(0x24,0x20,0);
 					}
 					else{
 						ErrorCheckFlag=1;
+						DisplayIcon(0x24,0x20,1);
 					}
-					DisplayIcon(0x24,0x20,ErrorCheckFlag);
 					break;
 				case 0x03 :
 					if(reservationFlag==1){
-						reservationFlag=0;
+						reservationFlag=2;
+						DisplayIcon(0x24,0x30,0);
 					}
 					else{
 						reservationFlag=1;
+						DisplayIcon(0x24,0x30,1);
 					}
-					DisplayIcon(0x24,0x30,reservationFlag);
 					break;
 				case 0x04 :
 					if(autoprintFlag==1){
-						autoprintFlag=0;
+						autoprintFlag=2;
+						DisplayIcon(0x24,0x40,0);
 					}
 					else{
 						autoprintFlag=1;
+						DisplayIcon(0x24,0x40,1);
 					}
-					DisplayIcon(0x24,0x40,autoprintFlag);
 					break;
 				case 0x06 :
 					if(printgraphFlag==1){
-						printgraphFlag=0;
+						printgraphFlag=2;
+						DisplayIcon(0x24,0x60,0);
 					}
 					else{
 						printgraphFlag=1;
+						DisplayIcon(0x24,0x60,1);
 					}
-					DisplayIcon(0x24,0x60,printgraphFlag);
+
 					break;
 			}
 			break;
@@ -1638,6 +1600,13 @@ void LCD_33(int index, int value){	//input Value
     	case 0x49 : // Pressure condition3
     		FlashPreesureCondition[2]=(float)value/10;
 			break;
+
+    	case 0x51 : // Pressure condition1
+    		Flashperispeed[0]=value;
+			break;
+    	case 0x55 : // Pressure condition2
+    		Flashperispeed[1]=value;
+			break;
     }
     //DisplayProcessSettingValues();
     //Display33page();
@@ -1822,6 +1791,10 @@ void LCD_34(int index, int value){	//input Value
 		        		PreesureCondition[1]=FlashPreesureCondition[1];
 		        		PreesureCondition[2]=FlashPreesureCondition[2];
 		        	}
+		        	if(Flashperispeed[0]!=0){
+		        		perispeed[0]=Flashperispeed[0];
+		        		perispeed[1]=Flashperispeed[1];
+					}
 		        	Write_Flash();
 		        	DisplayProcessSettingValues();
 		        	DisplayPage(currentpage);
@@ -1870,6 +1843,10 @@ void LCD_35(int index, int value){	//input Value
 		        		PreesureCondition[1]=FlashPreesureCondition[1];
 		        		PreesureCondition[2]=FlashPreesureCondition[2];
 		        	}
+		        	if(Flashperispeed[0]!=0){
+		        		perispeed[0]=Flashperispeed[0];
+		        		perispeed[1]=Flashperispeed[1];
+					}
 		        	Write_Flash();
 		        	DisplayProcessSettingValues();
 		        	DisplayPage(currentpage);
@@ -2234,12 +2211,7 @@ void LCD_60(int index, int value){	//input Value
 					}
 					break;
 				case 0x12 :
-		        	InitRFID();
-		        	DisplayRFIDNumber();
-		        	if(ReadRFID()==1){
-		        		//Write_Flash();
-		        	}
-		        	DisplayPage(currentpage);
+					RFIDCheck();
 		        	break;
 				case 0x13 :
 		        	DisplayPage(LCD_FACTORY_VACUUM_CALIBRATION_PAGE);
@@ -2310,6 +2282,11 @@ void ProcessSettingButton(int key){	//03XX
         		PreesureCondition[1]=FlashPreesureCondition[1];
         		PreesureCondition[2]=FlashPreesureCondition[2];
         	}
+        	if(Flashperispeed[0]!=0){
+        		perispeed[0]=Flashperispeed[0];
+        		perispeed[1]=Flashperispeed[1];
+        	}
+
         	Write_Flash();
         	DisplayProcessSettingValues();
         	DisplayPage(currentpage);
@@ -2373,9 +2350,6 @@ unsigned char   icon_select_index[6] = {0x00,0x10,0x20,0x30,0x40,0x50};
  * 8.Value2
  * 9.Value3
  * */
-
-
-unsigned char   icon_partstest_index[10] = {0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90};
 
 /*
 * 1.Vacuum Pump
@@ -2488,7 +2462,7 @@ void DisplayProcessTestValues(){
 	DisplayTimeValues();
 }
 void DisplayNormalValues(){
-
+	//한번만
 	if(CycleName==1){
 		DisplayPage8Char(0x11,0x01," SHORT  ");
 	}
@@ -2498,7 +2472,10 @@ void DisplayNormalValues(){
 	else if(CycleName==3){
 			DisplayPage8Char(0x11,0x01,"ADVANCED");
 	}
+
 	DisplayTime(0x11,0x10,CycleTime);
+
+
 	if(CurrentProcess==1){
 		DisplayPage8Char(0x11,0x30,"VACCUM1 ");
 	}
@@ -2521,18 +2498,13 @@ void DisplayNormalValues(){
 		DisplayPage8Char(0x11,0x30,"        ");
 	}
 
-
 	if(Running_Flag){
 		DisplayTime(0x11,0x40,ProcessTime[CurrentProcess]);
 		DisplayTime(0x11,0x10,CycleTime);
-		DisplayPageValue(0x11,0x45,Pressure*10);
-		DisplayPageValue(0x11,0x49,Temperature[1]*10);
 	}
 	else{
 		DisplayTime(0x11,0x40,0);
 		DisplayTime(0x11,0x10,TotalTime);
-		DisplayPageValue(0x11,0x45,Pressure*10);
-		DisplayPageValue(0x11,0x49,Temperature[1]*10);
 	}
 }
 
@@ -2676,7 +2648,7 @@ void DisplayValue(int index, float value){
 }
 void DisplayCycleValue(int value){
 	if(value==1){
-		DisplayPage8Char(0x34,0x01,"SHORT   ");
+		DisplayPage8Char(0x34,0x01,"  SHORT ");
 	}
 	else if(value==2){
 			DisplayPage8Char(0x34,0x01,"STANDARD");
@@ -2707,6 +2679,10 @@ void DisplayTempValues(){
 	DisplayPageValue(0x33,0x45,PreesureCondition[1]*10);
 	DisplayPageValue(0x33,0x49,PreesureCondition[2]*10);
 
+	DisplayPageValue(0x33,0x51,perispeed[0]);
+	DisplayPageValue(0x33,0x55,perispeed[1]);
+
+
 
 	for(int i=0;i<3;i++){
 		FlashSettingTemp[0][i]=DoorSettingTemp[i];
@@ -2714,6 +2690,9 @@ void DisplayTempValues(){
 		FlashSettingTemp[2][i]=ChamberBackSettingTemp[i];
 		FlashSettingTemp[3][i]=VaporizerSettingTemp[i];
 	}
+	Flashperispeed[0]=perispeed[0];
+	Flashperispeed[1]=perispeed[1];
+
 	FlashPreesureCondition[0]=PreesureCondition[0];
 	FlashPreesureCondition[1]=PreesureCondition[1];
 	FlashPreesureCondition[2]=PreesureCondition[2];
@@ -2722,20 +2701,15 @@ void DisplayTempValues(){
 
 
 void DisplayVacuumSensor(){
-	DisplayPageValue(0x31,0x31,Pressure*10);
-	DisplayPageValue(0x60,0x11,Pressure*10);
-	DisplayPageValue(0x62,0x19,data1);
-	DisplayPageValue(0x62,0x1D,Pressure*10);
+	if(Running_Flag==1){
+		DisplayPageValue(0x60,0x11,Pressure*10);
+	}
+	else{
+		DisplayPageValue(0x60,0x11,Pressure*10);
+		DisplayPageValue(0x62,0x19,data1);
+		DisplayPageValue(0x62,0x1D,Pressure*10);
+	}
 
-}
-
-void DisplayRFIDNumber(){	// RFID Display
-	unsigned char   H2O2RFID_log_display[9] = {0x5A, 0xA5, 0x06, 0x82, 0x02, 0x01, 0x00, 0x00, 0x00};
-
-	H2O2RFID_log_display[6]='0';
-	H2O2RFID_log_display[7]=(RFIDData.production_number/10)+'0';
-	H2O2RFID_log_display[8]=(RFIDData.production_number%10)+'0';
-	HAL_UART_Transmit(LCD_USART, H2O2RFID_log_display, 9, 10);
 }
 
 void Display02page(){
@@ -2791,9 +2765,7 @@ void Display10page(){
 
 }
 void Display11page(){
-	DisplayPageValue(0x11,0x51,totalCount);
-	DisplayPageValue(0x11,0x55,dailyCount);
-	DisplayPageValue(0x11,0x20,RFIDData.volume);
+
 }
 void Display12page(){
 
@@ -2812,42 +2784,22 @@ void Display21page(){
 	DisplayPage10Char(0x30,0x80,flash_SOFTWARE_VERSION);
 	DisplayPage10Char(0x30,0x90,flash_LANGUAGE);
 
+	GetTime();
+	//데일리 카운트 초기화
+	if(beforeday!=bcd2bin(today_date.day)){
+		beforeday=bcd2bin(today_date.day);
+		dailyCount=0;
+	}
 	DisplayPageValue(0x21,0x10,totalCount);
 	DisplayPageValue(0x21,0x20,dailyCount);
-
 	DisplayPageValue(0x28,0x40,CarbonFilter);
 	DisplayPageValue(0x28,0x50,HEPAFilter);
 	DisplayPageValue(0x28,0x60,PlasmaAssy);
+	Write_Flash();
 }
 
 void Display22page(){
-	if(RFIDData.open_year==0){
-		DisplayPageValue(0x22,0x10,0);
-		//RFIDData.open_year,RFIDData.open_month,RFIDData.open_day;
-		DisplayPage10Char(0x22,0x20,"");
-		DisplayPageValue(0x22,0x30,0);
-		DisplayPage10Char(0x22,0x40,"");
-		DisplayPage10Char(0x22,0x50,"");
-	}
-	else{
-		DisplayPageValue(0x22,0x10,RFIDData.volume);
-		char msg[10];
-		sprintf(msg,"20%2d-%02d-%02d",
-				RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-		DisplayPage10Char(0x22,0x20,msg);
-		GetTime();
-		int elapsed_days=calculateElapsedDays(bcd2bin(today_date.year),bcd2bin(today_date.month),bcd2bin(today_date.day),RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
-		RFIDData.elapsed_days=elapsed_days;
-
-		DisplayPageValue(0x22,0x30,30-elapsed_days);
-
-		//시리얼넘버
-		sprintf(msg,"%02d%02d%02d%02d  ",
-					RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
-		DisplayPage10Char(0x22,0x40,msg);
-		sprintf(msg,"%02dmL",RFIDData.volume);
-		DisplayPage10Char(0x22,0x50,msg);
-	}
+	DisplaySterilantData();
 }
 
 void Display24page(){
@@ -3108,20 +3060,6 @@ void Display31page(){
 	스팬 값
 	제로 값
 	 */
-
-	//Raw 데이터
-
-
-
-
-	//보정된 값
-	DisplayPageValue(0x31,0x01,Temperature[0]*10);
-	DisplayPageValue(0x31,0x05,Temperature[1]*10);
-	DisplayPageValue(0x31,0x09,Temperature[2]*10);
-	DisplayPageValue(0x31,0x0D,Temperature[3]*10);
-
-
-
 	DisplayPageValue(0x31,0x21,CalibrationTemp[0]);
 	DisplayPageValue(0x31,0x25,CalibrationTemp[1]);
 	DisplayPageValue(0x31,0x29,CalibrationTemp[2]);
@@ -3157,6 +3095,9 @@ void Display33page(){
 		FlashSettingTemp[2][i]=ChamberBackSettingTemp[i];
 		FlashSettingTemp[3][i]=VaporizerSettingTemp[i];
 	}
+	Flashperispeed[0]=perispeed[0];
+	Flashperispeed[1]=perispeed[1];
+
 	FlashPreesureCondition[0]=PreesureCondition[0];
 	FlashPreesureCondition[1]=PreesureCondition[1];
 	FlashPreesureCondition[2]=PreesureCondition[2];
@@ -3321,21 +3262,9 @@ void DisplayMsg(int page ,int index, char *msg){
 }
 
 void GetTime(void){
-	beforeday=today_date.day;
 	unsigned char week;
 	ReadRTC( &today_date.year, &today_date.month, &today_date.day, &week,
 			&today_date.hour, &today_date.minute, &today_date.second);
-	if(!is_same(today_date.day,beforeday,1)){
-		dailyCount=0;
-	}
-}
-
-void DisplayTemprature(){
-
-	DisplayPageValue(0x60,0x01,Temperature[0]*10);
-	DisplayPageValue(0x60,0x05,Temperature[1]*10);
-	DisplayPageValue(0x60,0x09,Temperature[2]*10);
-	DisplayPageValue(0x60,0x0D,Temperature[3]*10);
 }
 
 void DisplayIcons(){
@@ -3367,8 +3296,37 @@ void DisplayIcons(){
 	DisplayIcon(0x6C,0x60,LevelSensor2Check());
 }
 
+void DisplaySterilantData(){
+	//과수 정보 디스플레이
+	if(checkret!=1){
+		DisplayPage10Char(0x22,0x10,"");
+		DisplayPage10Char(0x22,0x20,"");
+		DisplayPage10Char(0x22,0x30,"");
+		DisplayPageValue(0x22,0x40,0);
+	}
+	else{
+		char msg[10];
+		sprintf(msg,"%02d%02d%02d%02d  ",
+					RFIDData.production_year,RFIDData.production_month,RFIDData.production_day, RFIDData.production_number);
+		DisplayPage10Char(0x22,0x10,msg);
+
+		memset(msg, 0, 10);
+		sprintf(msg,"20%2d-%02d-%02d",
+				RFIDData.open_year,RFIDData.open_month,RFIDData.open_day);
+		DisplayPage10Char(0x22,0x20,msg);
+
+		memset(msg, 0, 10);
+		sprintf(msg,"20%2d-%02d-%02d",
+				RFIDData.expiry_year,RFIDData.expiry_month,RFIDData.expiry_day);
+		DisplayPage10Char(0x22,0x30,msg);
+
+		DisplayPageValue(0x22,0x40,RFIDData.volume);
+	}
+	DisplayIcon(0x22,0x50,(int)(RFIDData.volume/10));
+}
+
 void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsigned char *week, unsigned char *hour, unsigned char *minute, unsigned char *second){
-    __disable_irq();
+    //__disable_irq();
     huart1.RxState= HAL_UART_STATE_READY;
     memset(LCD_rx_data, 0, 30);
     HAL_UART_Transmit(LCD_USART, (uint8_t*)rtc_date_get, 6, 10);
@@ -3386,7 +3344,7 @@ void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsi
     *second = LCD_rx_data[8];
 
     UART_Receive_Flag = 0;
-    __enable_irq();
+    //__enable_irq();
     HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 }
 

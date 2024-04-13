@@ -105,5 +105,6 @@ void GetData();
 void InitData();
 
 int calculateElapsedDays(int current_year, int current_month, int current_day, int open_year, int open_month, int open_day);
+int check_expiry();
 
 #endif /* SRC_PERIPHERAL_PROCESS_H_ */

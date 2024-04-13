@@ -21,6 +21,7 @@ int perispeed[3];
 
 void TurnOnPeristalticPump(void){
 	// PeristalticPump On.
+	PeristalticSpeed();
 	if(LevelSensor2Check()){
 
 	}
@@ -39,8 +40,16 @@ void TurnOffPeristalticPump(void){
 }
 
 void PeristalticSpeed(){	// 분당 분사량 조절
-	TIM5->CNT=0;
-	TIM5->ARR = 20000;
+	TIM4->CNT=0;
+	//TIM4->ARR = 20000;
+	if(perispeed[0]==0){
+		perispeed[0]=5;
+	}
+
+	TIM4->ARR=(550)/perispeed[0]-1;
+	TIM4->CCR3=(550)/perispeed[0]/2-1;
+
+
 /*
 	//2Channel JIHPUMP
 	if(fInjectionPerMinute==15){

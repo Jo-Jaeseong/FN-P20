@@ -164,7 +164,7 @@ void Write_Data_Flash(){
 	write_data[17]=RFIDData.open_day;
 
 	write_data[18]=RFIDData.volume;
-	write_data[19]=RFIDData.elapsed_days;
+
 
 	//TotalTime
 	/*

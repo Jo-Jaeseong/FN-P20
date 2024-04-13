@@ -52,10 +52,8 @@ ProcessData SavemyCycleData;
 void SaveCycleData(){
     char filename[20]; // 파일 이름을 저장할 배열
 
-    GetStartTime();
-    GetEndTime();
-
     sprintf(filename, "%02d.%02d.%02d_", bcd2bin(p_data.year), bcd2bin(p_data.month), bcd2bin(p_data.day));
+    sprintf(filename + strlen(filename), "%02d:%02d:%02d_",bcd2bin(p_data.start_hour),bcd2bin(p_data.start_minute),bcd2bin(p_data.start_second));
     sprintf(filename + strlen(filename), "%03d.txt", totalCount);
 	// USB 메모리가 준비된 상태인지 확인
 	if(Appli_state == APPLICATION_READY){
@@ -119,7 +117,7 @@ void fprintCycelData(){
 	f_printf(&USBHFile,"Sterilant                       \n");
 	f_printf(&USBHFile,"SERIAL NO     :  %02d%02d%02d%02d\n",(int)RFIDData.production_year,(int)RFIDData.production_month,(int)RFIDData.production_day, (int)RFIDData.production_number);
 	f_printf(&USBHFile,"Loading Date  :  20%2d-%02d-%02d\n",(int)RFIDData.open_year,(int)RFIDData.open_month,(int)RFIDData.open_day);
-	f_printf(&USBHFile,"Expiry Date   :  %02d\n",SterilantCheckDay-RFIDData.elapsed_days);
+	f_printf(&USBHFile,"Loading Date  :  20%2d-%02d-%02d\n",(int)RFIDData.expiry_year,(int)RFIDData.expiry_month,(int)RFIDData.expiry_day);
 	f_printf(&USBHFile,"Remain H2O2   :  %02d\n",RFIDData.volume);
 
 	//사이클 정보 저장하고 불러와야함
