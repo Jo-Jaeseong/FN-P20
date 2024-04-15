@@ -54,8 +54,6 @@ extern struct RFID_format loadRFIDData;
 extern unsigned char loadflash_ID[10];
 
 
-extern float PressureData[300];
-extern float TemperatureData[300];
 
 void initprint(){
 	PRINT_rx_data[0]=ESC;
@@ -431,7 +429,6 @@ void PrintPartsTest(){
 
 void LoadCyclePrint(){
 	initprint();
-	int tempminute,tempsecond;
 
 	printmsg("--------------------------------\n");
 	printmsg("Clean Bio Tech Corp             \n");
@@ -455,33 +452,30 @@ void LoadCyclePrint(){
 	printmsg("--------------------------------\n");
 	printmsg("Sterilant                       \n");
 
-
-
-
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"SERIAL NO     :  %02d%02d%02d%02d\n",(int)loadRFIDData.production_year,(int)loadRFIDData.production_month,(int)loadRFIDData.production_day, (int)loadRFIDData.production_number);
+	sprintf(pinrtdata,"SERIAL NO     :  %02d%02d%02d%02d\n",(int)saveCycleData.serialNumber[0],(int)saveCycleData.serialNumber[1],(int)saveCycleData.serialNumber[2], (int)saveCycleData.serialNumber[3]);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",(int)loadRFIDData.open_year,(int)loadRFIDData.open_month,(int)loadRFIDData.open_day);
+	sprintf(pinrtdata,"Loading Date  :  20%2d-%02d-%02d\n",(int)saveCycleData.loadingDate[0],(int)saveCycleData.loadingDate[1],(int)saveCycleData.loadingDate[2]);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Expiry Date   :  20%2d-%02d-%02d\n",(int)loadRFIDData.expiry_year,(int)loadRFIDData.expiry_month,(int)loadRFIDData.expiry_day);
+	sprintf(pinrtdata,"Expiry Date   :  20%2d-%02d-%02d\n",(int)saveCycleData.expiryDate[0],(int)saveCycleData.expiryDate[1],(int)saveCycleData.expiryDate[2]);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Remain H2O2   :  %3d\n",loadRFIDData.volume);
+	sprintf(pinrtdata,"Remain H2O2   :  %-3d\n",saveCycleData.volume);
 	printmsg(pinrtdata);
 	printmsg("--------------------------------\n");
 
-	if(load_data.cyclename==1){
+	if(saveCycleData.cycleName==1){
 		printmsg("Selected Cycle:  Short          \n");
 	}
-	else if(load_data.cyclename==2){
+	else if(saveCycleData.cycleName==2){
 		printmsg("Selected Cycle:  Standard       \n");
 	}
-	else if(load_data.cyclename==3){
+	else if(saveCycleData.cycleName==3){
 		printmsg("Selected Cycle:  Advanced       \n");
 	}
 	else{
@@ -489,258 +483,253 @@ void LoadCyclePrint(){
 	}
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Cycle   :  %03d     \n",loadtotalCount);
+	sprintf(pinrtdata,"Total Cycle   :  %-3d     \n",saveCycleData.totalCount);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Daily Cycle   :  %03d     \n",loaddailyCount);
+	sprintf(pinrtdata,"Daily Cycle   :  %-3d     \n",saveCycleData.dailyCount);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
 	sprintf(pinrtdata,"DATE          :  20%2d-%02d-%02d\n",
-			bcd2bin(load_data.year),bcd2bin(load_data.month),bcd2bin(load_data.day));
+			saveCycleData.date[0],saveCycleData.date[1],saveCycleData.date[2]);
 	printmsg(pinrtdata);
 	memset(pinrtdata,0,40);
 	sprintf(pinrtdata,"Start Time    :  %02d:%02d:%02d\n",
-			bcd2bin(load_data.start_hour),bcd2bin(load_data.start_minute),bcd2bin(load_data.start_second));
+			saveCycleData.startTime[0],saveCycleData.startTime[1],saveCycleData.startTime[2]);
 	printmsg(pinrtdata);
 	memset(pinrtdata,0,40);
 	sprintf(pinrtdata,"End Time      :  %02d:%02d:%02d\n",
-				bcd2bin(load_data.end_hour),bcd2bin(load_data.end_minute),bcd2bin(load_data.end_second));
+				saveCycleData.endTime[0],saveCycleData.endTime[1],saveCycleData.endTime[2]);
 	printmsg(pinrtdata);
-
-
 
 	printmsg("--------------------------------\n");
 	printmsg("[ VACUUM 1 ]                    \n");
-	tempminute=(loadfProcessTime[1]/100)/60;
-	tempsecond=(loadfProcessTime[1]/100)%60;
+
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",saveCycleData.processTime[1][0],saveCycleData.processTime[1][1]);
 	printmsg(pinrtdata);
 
-	if((int)load_data.tempmax[1]==0){
+	if((int)saveCycleData.maxTemperature[1]==0){
 		printmsg("Temp(Max)     :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",load_data.tempmax[1]);
+		sprintf(pinrtdata,"Temp(Max)     :  %-3d     \n",saveCycleData.maxTemperature[1]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremax[1]==0){
+	if((int)saveCycleData.maxPressure[1]==0){
 		printmsg("Pressure(Max) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(Max) :  %4.1f   \n",load_data.pressuremax[1]);
+		sprintf(pinrtdata,"Pressure(Max) :  %-4d     \n",saveCycleData.maxPressure[1]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremin[1]==760){
+	if((int)saveCycleData.minPressure[1]==760){
 		printmsg("Pressure(Min) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(min) :  %4.1f   \n",load_data.pressuremin[1]);
+		sprintf(pinrtdata,"Pressure(min) :  %-4d     \n",saveCycleData.minPressure[1]);
 		printmsg(pinrtdata);
 	}
 
 
 	printmsg("[ INJECTION 1 & DIFFUSION 1 ]   \n");
-	tempminute=(loadfProcessTime[2]/100)/60;
-	tempsecond=(loadfProcessTime[2]/100)%60;
+
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",saveCycleData.processTime[2][0],saveCycleData.processTime[2][1]);
 	printmsg(pinrtdata);
 
-	if((int)load_data.tempmax[2]==0){
+	if((int)saveCycleData.maxTemperature[2]==0){
 		printmsg("Temp(Max)     :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",load_data.tempmax[2]);
+		sprintf(pinrtdata,"Temp(Max)     :  %-3d     \n",saveCycleData.maxTemperature[2]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremax[2]==0){
+	if((int)saveCycleData.maxPressure[2]==0){
 		printmsg("Pressure(Max) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(Max) :  %4.1f   \n",load_data.pressuremax[2]);
+		sprintf(pinrtdata,"Pressure(Max) :  %-4d     \n",saveCycleData.maxPressure[2]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremin[2]==760){
+	if((int)saveCycleData.minPressure[2]==760){
 		printmsg("Pressure(Min) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(min) :  %4.1f   \n",load_data.pressuremin[2]);
+		sprintf(pinrtdata,"Pressure(min) :  %-4d     \n",saveCycleData.minPressure[2]);
 		printmsg(pinrtdata);
 	}
 
 
 	printmsg("[ VACUUM 2 & PLASMA 1 ]         \n");
-	tempminute=(loadfProcessTime[3]/100)/60;
-	tempsecond=(loadfProcessTime[3]/100)%60;
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",saveCycleData.processTime[3][0],saveCycleData.processTime[3][1]);
 	printmsg(pinrtdata);
 
-	if((int)load_data.tempmax[3]==0){
+	if((int)saveCycleData.maxTemperature[3]==0){
 		printmsg("Temp(Max)     :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",load_data.tempmax[3]);
+		sprintf(pinrtdata,"Temp(Max)     :  %-3d     \n",saveCycleData.maxTemperature[3]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremax[3]==0){
+	if((int)saveCycleData.maxPressure[3]==0){
 		printmsg("Pressure(Max) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(Max) :  %4.1f   \n",load_data.pressuremax[3]);
+		sprintf(pinrtdata,"Pressure(Max) :  %-4d     \n",saveCycleData.maxPressure[3]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremin[3]==760){
+	if((int)saveCycleData.minPressure[3]==760){
 		printmsg("Pressure(Min) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(min) :  %4.1f   \n",load_data.pressuremin[3]);
+		sprintf(pinrtdata,"Pressure(min) :  %-4d     \n",saveCycleData.minPressure[3]);
 		printmsg(pinrtdata);
 	}
 
 
 	printmsg("[ INJECTION 2 & DIFFUSION 2 ]   \n");
-	tempminute=(loadfProcessTime[4]/100)/60;
-	tempsecond=(loadfProcessTime[4]/100)%60;
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",saveCycleData.processTime[4][0],saveCycleData.processTime[4][1]);
 	printmsg(pinrtdata);
 
-	if((int)load_data.tempmax[4]==0){
+	if((int)saveCycleData.maxTemperature[4]==0){
 		printmsg("Temp(Max)     :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",load_data.tempmax[4]);
+		sprintf(pinrtdata,"Temp(Max)     :  %-3d     \n",saveCycleData.maxTemperature[4]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremax[4]==0){
+	if((int)saveCycleData.maxPressure[4]==0){
 		printmsg("Pressure(Max) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(Max) :  %4.1f   \n",load_data.pressuremax[4]);
+		sprintf(pinrtdata,"Pressure(Max) :  %-4d     \n",saveCycleData.maxPressure[4]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremin[4]==760){
+	if((int)saveCycleData.minPressure[4]==760){
 		printmsg("Pressure(Min) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(min) :  %4.1f   \n",load_data.pressuremin[4]);
+		sprintf(pinrtdata,"Pressure(min) :  %-4d     \n",saveCycleData.minPressure[4]);
 		printmsg(pinrtdata);
 	}
 
 
 	printmsg("[ VACUUM 3 & PLASMA 2 ]         \n");
-	tempminute=(loadfProcessTime[5]/100)/60;
-	tempsecond=(loadfProcessTime[5]/100)%60;
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",saveCycleData.processTime[5][0],saveCycleData.processTime[5][1]);
 	printmsg(pinrtdata);
 
-	if((int)load_data.tempmax[5]==0){
+	if((int)saveCycleData.maxTemperature[5]==0){
 		printmsg("Temp(Max)     :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",load_data.tempmax[5]);
+		sprintf(pinrtdata,"Temp(Max)     :  %-3d     \n",saveCycleData.maxTemperature[5]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremax[5]==0){
+	if((int)saveCycleData.maxPressure[5]==0){
 		printmsg("Pressure(Max) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(Max) :  %4.1f   \n",load_data.pressuremax[5]);
+		sprintf(pinrtdata,"Pressure(Max) :  %-4d     \n",saveCycleData.maxPressure[5]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremin[5]==760){
+	if((int)saveCycleData.minPressure[5]==760){
 		printmsg("Pressure(Min) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(min) :  %4.1f   \n",load_data.pressuremin[5]);
+		sprintf(pinrtdata,"Pressure(min) :  %-4d     \n",saveCycleData.minPressure[5]);
 		printmsg(pinrtdata);
 	}
 
 
 	printmsg("[ VENT 1 ]                      \n");
-	tempminute=(loadfProcessTime[6]/100)/60;
-	tempsecond=(loadfProcessTime[6]/100)%60;
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Total Time    :  %02d:%02d      \n",saveCycleData.processTime[6][0],saveCycleData.processTime[6][1]);
 	printmsg(pinrtdata);
 
-	if((int)load_data.tempmax[6]==0){
+	if((int)saveCycleData.maxTemperature[6]==0){
 		printmsg("Temp(Max)     :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",load_data.tempmax[6]);
+		sprintf(pinrtdata,"Temp(Max)     :  %-3d     \n",saveCycleData.maxTemperature[6]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremax[6]==0){
+	if((int)saveCycleData.maxPressure[6]==0){
 		printmsg("Pressure(Max) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(Max) :  %4.1f   \n",load_data.pressuremax[6]);
+		sprintf(pinrtdata,"Pressure(Max) :  %-4d     \n",saveCycleData.maxPressure[6]);
 		printmsg(pinrtdata);
 	}
-	if((int)load_data.pressuremin[6]==760){
+	if((int)saveCycleData.minPressure[6]==760){
 		printmsg("Pressure(Min) :                 \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Pressure(min) :  %4.1f   \n",load_data.pressuremin[6]);
+		sprintf(pinrtdata,"Pressure(min) :  %-4d     \n",saveCycleData.minPressure[6]);
 		printmsg(pinrtdata);
 	}
 
 	printmsg("--------------------------------\n");
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"CARBON FILTER :     %04d     \n",loadCarbonFilter);
+	sprintf(pinrtdata,"CARBON FILTER :  %-4d       \n",saveCycleData.carbonFilter);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"HEPA FILTER   :     %04d     \n",loadHEPAFilter);
+	sprintf(pinrtdata,"HEPA FILTER   :  %-4d       \n",saveCycleData.hepaFilter);
 	printmsg(pinrtdata);
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"PLASMA ASSY   :     %04d     \n",loadPlasmaAssy);
+	sprintf(pinrtdata,"PLASMA ASSY   :  %-4d       \n",saveCycleData.plasmaAssy);
 	printmsg(pinrtdata);
 	printmsg("--------------------------------\n");
 
-	tempminute=(loadTotalTime/100)/60;
-	tempsecond=(loadTotalTime/100)%60;
+
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Cycle Time    :  %02d:%02d      \n",tempminute,tempsecond);
+	sprintf(pinrtdata,"Cycle Time    :  %02d:%02d      \n",saveCycleData.totalTime[0],saveCycleData.totalTime[1]);
 	printmsg(pinrtdata);
-	if(load_data.status==11){
+	if(saveCycleData.status==11){
 		printmsg("Cycle Status  :  Completed      \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Cycle Status  :  ERROR%02d        \n",load_data.status);
+		sprintf(pinrtdata,"Cycle Status  :  ERROR%02d        \n",saveCycleData.status);
 		printmsg(pinrtdata);
 	}
 	//printmsg("Operator ID   :                 \n");
 
 	memset(pinrtdata,0,40);
-	sprintf(pinrtdata,"Operator ID   :  %c%c%c%c%c%c%c%c%c%c\n",loadflash_ID[0],loadflash_ID[1],loadflash_ID[2],
-			loadflash_ID[3],loadflash_ID[4],loadflash_ID[5],loadflash_ID[6],loadflash_ID[7],loadflash_ID[8],loadflash_ID[9]);
+	if(saveCycleData.ID==10){
+		sprintf(pinrtdata,"Operator ID   :  CBT            \n");
+	}
+	else if(saveCycleData.ID==9){
+		sprintf(pinrtdata,"Operator ID   :  ADMIN          \n");
+	}
+	else{
+		sprintf(pinrtdata,"Operator ID   :  %c%c%c%c%c%c%c%c%c%c\n",flash_ID[CurrentUser][0],flash_ID[CurrentUser][1],flash_ID[CurrentUser][2],
+					flash_ID[CurrentUser][3],flash_ID[CurrentUser][4],flash_ID[CurrentUser][5],flash_ID[CurrentUser][6],flash_ID[CurrentUser][7],flash_ID[CurrentUser][8],flash_ID[CurrentUser][9]);
+	}
 	printmsg(pinrtdata);
 
 	printmsg("Approved by   :                 \n");
@@ -896,7 +885,7 @@ void CyclePrint(){
 	}
 	else{
 		memset(pinrtdata,0,40);
-		sprintf(pinrtdata,"Temp(Max)     :  %3.1f   \n",p_data.tempmax[2]);
+		sprintf(pinrtdata,"Temp(Max)     :%3d 1f   \n",p_data.tempmax[2]);
 		printmsg(pinrtdata);
 	}
 	if((int)p_data.pressuremax[2]==0){
@@ -1068,10 +1057,12 @@ void CyclePrint(){
 	sprintf(pinrtdata,"Cycle Time    :  %02d:%02d      \n",tempminute,tempsecond);
 	printmsg(pinrtdata);
 	if(errorcode==0){
+		p_data.status=11;
 		printmsg("Cycle Status  :  Completed      \n");
 	}
 	else{
 		memset(pinrtdata,0,40);
+		p_data.status=errorcode;
 		sprintf(pinrtdata,"Cycle Status  :  ERROR%02d        \n",errorcode);
 		printmsg(pinrtdata);
 	}

@@ -30,9 +30,6 @@
 #define W25Q16_CS_Pin F_CS_Pin
 #define W25Q16_CS_GPIO_Port F_CS_GPIO_Port
 
-extern float PressureData[300];
-extern float TemperatureData[300];
-
 unsigned char loadflash_ID[10];
 unsigned char flash_load_index;
 extern struct data_format load_data;
@@ -55,9 +52,6 @@ unsigned int loadHEPAFilter;
 unsigned int loadPlasmaAssy;
 
 extern unsigned int inputyear, inputmonth, inputday;
-
-unsigned int temptotalcycle[6];
-
 
 #define HISTORY_FIRST_DATA	10//[240]
 

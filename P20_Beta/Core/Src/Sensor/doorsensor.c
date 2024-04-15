@@ -6,7 +6,7 @@
  */
 
 #include "main.h"
-#include "doorsensor.h"
+#include "peripheral.h"
 #include "sensor.h"
 
 // ------------------- Variables -------------------
@@ -78,7 +78,14 @@ int DoorOpenProcess(){
 	}
 	if(DoorCheckcnt==1){
 		if(DoorLatchCheck()){
-			return 1;
+    		if(Pressure>DoorOpenPressure){
+    			return 1;
+    		}
+    		else{
+    			beforepage=currentpage;
+    			DisplayPage(LCD_DOOROPENMESSAGE_PAGE);
+    			return 0;
+    		}
 			DoorCheckcnt=0;
 		}
 	}
@@ -86,4 +93,3 @@ int DoorOpenProcess(){
 		return 0;
 	}
 }
-

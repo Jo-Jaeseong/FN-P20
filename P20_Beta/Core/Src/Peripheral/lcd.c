@@ -59,21 +59,25 @@ extern unsigned char flash_load_index;
 extern struct data_format load_data;
 extern float loadPressureData[300];
 extern float loadTemperatureData[300];
-extern unsigned int temptotalcycle[6];
 
-extern float PressureData[300];
-extern float TemperatureData[300];
+
 
 extern unsigned int DataCounter;
 
+uint32_t startTick, endTick, duration;
+/*
+startTick = HAL_GetTick(); // 기능 실행 전 타임스탬프 캡처
+// 여기에 측정하고자 하는 기능 혹은 함수 호출
+endTick = HAL_GetTick(); // 기능 실행 후 타임스탬프 캡처
+duration = endTick - startTick; // 실행 시간(밀리초 단위)
+*/
+
 void InitLCD(void){	//LCD 초기화
 	HAL_Delay(500);
-	DisplayFirstPage();
-	//DisplayPage8Char(0x12,0x01,"COMPLETE");
-	//DisplayPage8Char(0x12,0x01,"ERROR01");
-	//DisplayPage8Char(0x34,0x01,"  SHORT ");
-	//DisplayPage8Char(0x34,0x01,"STANDARD");
-	//DisplayPage(22);
+	//DisplayFirstPage();
+	CurrentUser=10;
+	DisplayPage(5);
+	//DisplayPage(60);
 	HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 	SetRTCFromLCD();
     //Start_Page
@@ -157,6 +161,7 @@ void DisplayTempGraph(int number, int color){
 			Display_Dot[16+4*30]=0xFF;
 			Display_Dot[17+4*30]=0x00;
 			HAL_UART_Transmit(LCD_USART, Display_Dot, 18+4*30, 100);
+
 		}
 		if(number!=Displaysector*30){
 			Display_Dot[2]=15+4*(number-Displaysector*30);
@@ -568,16 +573,6 @@ void DoActionButton(int key){	//00xx
 			//DisplayVacuumGraph(200,1);
         	//DisplayVacuumGraph(10,1);
 
-
-        	//DisplayDot(0x40,0x00,1,1);
-
-        	/*
-        	for(int i=0;i<300;i++){
-        		DisplayDot(0x40,0x00,130+i,130+i);
-        	}
-        	*/
-        	//DisplayDot(0x40,0x00,300,300);
-
             break;
         case 2:	//LOGIN BUTTON
         	VacuumPump(0);
@@ -619,7 +614,9 @@ void DoActionButton(int key){	//00xx
         	}
         	break;
         case 0x13:
-        	Display23page();
+        	for(int i=0;i<6;i++){
+        		temptotalcycle[i]=0;
+        	}
         	inputyear=0;
         	inputmonth=0;
         	inputday=0;
@@ -631,6 +628,8 @@ void DoActionButton(int key){	//00xx
 			DisplaySelectIcon(3,0);
 			DisplaySelectIcon(4,0);
 			DisplaySelectIcon(5,0);
+			saveCycleData.cycleName=0;
+			Display23page();
         	if(CurrentUser==10){
         		DisplayPage(LCD_INFO_HISTORY_PAGE);
     		}
@@ -1277,8 +1276,9 @@ void LCD_23(int index, int value){	//input Value
 
 					}
 					else{
-						Read_Setting_Data_Flash();
-						flash_load_index=0;
+						//Read_Setting_Data_Flash();
+						//flash_load_index=0;
+						ReadListData(inputyear,inputmonth,inputday);
 						DisplaySelectIcon(1,0);
 						DisplaySelectIcon(2,0);
 						DisplaySelectIcon(3,0);
@@ -1292,68 +1292,69 @@ void LCD_23(int index, int value){	//input Value
 					break;
 
 				case 0x0A :
-					if(load_data.cyclename!=0){
+					if(saveCycleData.cycleName!=0){
 						LoadCyclePrint();
 					}
 					break;
 				case 0x11 :
-					flash_load_index=temptotalcycle[1];
-					DisplaySelectIcon(1,1);
-					DisplaySelectIcon(2,0);
-					DisplaySelectIcon(3,0);
-					DisplaySelectIcon(4,0);
-					DisplaySelectIcon(5,0);
-					//flash_load_index=1;
-					Read_Data_Flash();
+					if(fileCount>0&&temptotalcycle[1]!=0){
+						LoadCycleData(inputyear,inputmonth,inputday,temptotalcycle[1]);
+						DisplaySelectIcon(1,1);
+						DisplaySelectIcon(2,0);
+						DisplaySelectIcon(3,0);
+						DisplaySelectIcon(4,0);
+						DisplaySelectIcon(5,0);
+					}
 					DisplayPage(LCD_INFO_HISTORY_PAGE);
 					break;
 				case 0x12 :
-					flash_load_index=temptotalcycle[2];
-					DisplaySelectIcon(1,0);
-					DisplaySelectIcon(2,1);
-					DisplaySelectIcon(3,0);
-					DisplaySelectIcon(4,0);
-					DisplaySelectIcon(5,0);
-					//flash_load_index=2;
-					Read_Data_Flash();
+					if(fileCount>0&&temptotalcycle[2]!=0){
+						LoadCycleData(inputyear,inputmonth,inputday,temptotalcycle[2]);
+						DisplaySelectIcon(1,0);
+						DisplaySelectIcon(2,1);
+						DisplaySelectIcon(3,0);
+						DisplaySelectIcon(4,0);
+						DisplaySelectIcon(5,0);
+					}
 					DisplayPage(LCD_INFO_HISTORY_PAGE);
 					break;
 				case 0x13 :
-					flash_load_index=temptotalcycle[3];
-					DisplaySelectIcon(1,0);
-					DisplaySelectIcon(2,0);
-					DisplaySelectIcon(3,1);
-					DisplaySelectIcon(4,0);
-					DisplaySelectIcon(5,0);
-					//flash_load_index=3;
-					Read_Data_Flash();
+					if(fileCount>0&&temptotalcycle[3]!=0){
+						LoadCycleData(inputyear,inputmonth,inputday,temptotalcycle[3]);
+						DisplaySelectIcon(1,0);
+						DisplaySelectIcon(2,0);
+						DisplaySelectIcon(3,1);
+						DisplaySelectIcon(4,0);
+						DisplaySelectIcon(5,0);
+					}
 					DisplayPage(LCD_INFO_HISTORY_PAGE);
 					break;
 				case 0x14 :
-					flash_load_index=temptotalcycle[4];
-					DisplaySelectIcon(1,0);
-					DisplaySelectIcon(2,0);
-					DisplaySelectIcon(3,0);
-					DisplaySelectIcon(4,1);
-					DisplaySelectIcon(5,0);
-					//flash_load_index=4;
-					Read_Data_Flash();
+					if(fileCount>0&&temptotalcycle[4]!=0){
+						LoadCycleData(inputyear,inputmonth,inputday,temptotalcycle[4]);
+						DisplaySelectIcon(1,0);
+						DisplaySelectIcon(2,0);
+						DisplaySelectIcon(3,0);
+						DisplaySelectIcon(4,1);
+						DisplaySelectIcon(5,0);
+					}
 					DisplayPage(LCD_INFO_HISTORY_PAGE);
 					break;
 				case 0x15 :
-					flash_load_index=temptotalcycle[5];
-					DisplaySelectIcon(1,0);
-					DisplaySelectIcon(2,0);
-					DisplaySelectIcon(3,0);
-					DisplaySelectIcon(4,0);
-					DisplaySelectIcon(5,1);
-					Read_Data_Flash();
+					if(fileCount>0&&temptotalcycle[5]!=0){
+						LoadCycleData(inputyear,inputmonth,inputday,temptotalcycle[5]);
+						DisplaySelectIcon(1,0);
+						DisplaySelectIcon(2,0);
+						DisplaySelectIcon(3,0);
+						DisplaySelectIcon(4,0);
+						DisplaySelectIcon(5,1);
+					}
 					DisplayPage(LCD_INFO_HISTORY_PAGE);
 					break;
 			}
 			break;
 		case 0xB0 :
-			inputyear=value-2000;
+			inputyear=value;
 			break;
 
 		case 0xB5 :
@@ -2127,7 +2128,7 @@ void LCD_60(int index, int value){	//input Value
 		        		//DisplayIcon(0x6A,0x10,1);
 					}
 					//SaveSettingData(&myProcessData);
-					SaveCycleData();
+					SaveCycle();
 					break;
 				case 0x02 ://not used
 					if(!HAL_GPIO_ReadPin(GPIO_OUT12_GPIO_Port, GPIO_OUT12_Pin)){
@@ -2548,6 +2549,8 @@ void DisplayProcessTestValues(){
 	DisplayStepIcons(CurrentStep);
 	DisplayPartsIcons();
 	DisplayTimeValues();
+	DisplayIcon(0x6C,0x50,LevelSensor1Check());
+	DisplayIcon(0x6C,0x60,LevelSensor2Check());
 }
 void DisplayNormalValues(){
 	//한번만
@@ -2594,6 +2597,7 @@ void DisplayNormalValues(){
 		DisplayTime(0x11,0x40,0);
 		DisplayTime(0x11,0x10,TotalTime);
 	}
+
 }
 
 
@@ -2904,95 +2908,107 @@ void Display24page(){
 }
 
 void Display23page(){
-	if(load_data.cyclename==1){
-		DisplayPage10Char(0x23,0x10,"  SHORT   ");
-	}
-	else if(load_data.cyclename==2){
-		DisplayPage10Char(0x23,0x10," STANDARD ");
-	}
-	else if(load_data.cyclename==3){
-		DisplayPage10Char(0x23,0x10," ADVANCED ");
-	}
-	else{
-		DisplayPage10Char(0x23,0x10,"  NODATA  ");
-	}
+	if(saveCycleData.cycleName==0){
+		DisplayPage10Char(0x23,0x10,"NODATA    ");
+		DisplayPage10Char(0x23,0x20,"NODATA    ");
+		DisplayPage10Char(0x23,0x30,"NODATA    ");
+		DisplayPage10Char(0x23,0x40,"NODATA    ");
+		DisplayPageValue(0x23,0x50,0);
+		DisplayPageValue(0x23,0x55,0);
 
-	if(load_data.status==11){
-		DisplayPage10Char(0x23,0x20," COMPELTE ");
-	}
-	else if(load_data.status==1){
-		DisplayPage10Char(0x23,0x20," ERROR01  ");
-	}
-	else if(load_data.status==2){
-		DisplayPage10Char(0x23,0x20," ERROR02  ");
-	}
-	else if(load_data.status==3){
-		DisplayPage10Char(0x23,0x20," ERROR03  ");
-	}
-	else if(load_data.status==4){
-		DisplayPage10Char(0x23,0x20," ERROR04  ");
-	}
-	else if(load_data.status==5){
-		DisplayPage10Char(0x23,0x20," ERROR05  ");
-	}
-	else if(load_data.status==6){
-		DisplayPage10Char(0x23,0x20," ERROR06  ");
-	}
-	else if(load_data.status==7){
-		DisplayPage10Char(0x23,0x20," ERROR07  ");
-	}
-	else if(load_data.status==8){
-		DisplayPage10Char(0x23,0x20," ERROR08  ");
-	}
-	else if(load_data.status==9){
-		DisplayPage10Char(0x23,0x20," ERROR09  ");
-	}
-	else if(load_data.status==10){
-		DisplayPage10Char(0x23,0x20," ERROR10  ");
-	}
-	else{
-		DisplayPage10Char(0x23,0x20,"  NODATA  ");
-	}
+		DisplayPageValue(0x23,0x60,0);
+		DisplayPageValue(0x23,0x65,0);
 
-	char msg[10];
-	if(load_data.start_hour==0){
-		DisplayPage10Char(0x23,0x30,"  NODATA  ");
+		DisplayPageValue(0x23,0x70,0);
+		DisplayPageValue(0x23,0x75,0);
+
+		DisplayPageValue(0x23,0x80,0);
+		DisplayPageValue(0x23,0x85,0);
+
+		DisplayPageValue(0x23,0x90,0);
+		DisplayPageValue(0x23,0x95,0);
+
+		DisplayPageValue(0x23,0xA0,0);
+		DisplayPageValue(0x23,0xA5,0);
 	}
 	else{
-		sprintf(msg," %02d:%02d:%02d ",
-				bcd2bin(load_data.start_hour),bcd2bin(load_data.start_minute),bcd2bin(load_data.start_second));
+		if(saveCycleData.cycleName==1){
+			DisplayPage10Char(0x23,0x10,"SHORT     ");
+		}
+		else if(saveCycleData.cycleName==2){
+			DisplayPage10Char(0x23,0x10,"STANDARD  ");
+		}
+		else if(saveCycleData.cycleName==3){
+			DisplayPage10Char(0x23,0x10,"ADVANCED  ");
+		}
+
+		if(saveCycleData.status==11){
+			DisplayPage10Char(0x23,0x20,"COMPELTE  ");
+		}
+		else if(saveCycleData.status==1){
+			DisplayPage10Char(0x23,0x20,"ERROR01   ");
+		}
+		else if(saveCycleData.status==2){
+			DisplayPage10Char(0x23,0x20,"ERROR02   ");
+		}
+		else if(saveCycleData.status==3){
+			DisplayPage10Char(0x23,0x20,"ERROR03   ");
+		}
+		else if(saveCycleData.status==4){
+			DisplayPage10Char(0x23,0x20,"ERROR04   ");
+		}
+		else if(saveCycleData.status==5){
+			DisplayPage10Char(0x23,0x20,"ERROR05   ");
+		}
+		else if(saveCycleData.status==6){
+			DisplayPage10Char(0x23,0x20,"ERROR06   ");
+		}
+		else if(saveCycleData.status==7){
+			DisplayPage10Char(0x23,0x20,"ERROR07   ");
+		}
+		else if(saveCycleData.status==8){
+			DisplayPage10Char(0x23,0x20,"ERROR08   ");
+		}
+		else if(saveCycleData.status==9){
+			DisplayPage10Char(0x23,0x20,"ERROR09   ");
+		}
+		else if(saveCycleData.status==10){
+			DisplayPage10Char(0x23,0x20,"ERROR10   ");
+		}
+		else{
+			DisplayPage10Char(0x23,0x20,"NODATA    ");
+		}
+		char msg[10];
+
+		sprintf(msg,"%02d:%02d:%02d  ",	bcd2bin(saveCycleData.startTime[0]),bcd2bin(saveCycleData.startTime[1]),bcd2bin(saveCycleData.startTime[2]));
 		DisplayPage10Char(0x23,0x30,msg);
-	}
-
-	if(load_data.end_hour==0){
-		DisplayPage10Char(0x23,0x40,"  NODATA  ");
-	}
-	else{
-		sprintf(msg," %02d:%02d:%02d ",
-				bcd2bin(load_data.end_hour),bcd2bin(load_data.end_minute),bcd2bin(load_data.end_second));
+		sprintf(msg,"%02d:%02d:%02d  ",	bcd2bin(saveCycleData.endTime[0]),bcd2bin(saveCycleData.endTime[1]),bcd2bin(saveCycleData.endTime[2]));
 		DisplayPage10Char(0x23,0x40,msg);
+
+		DisplayPageValue(0x23,0x50,saveCycleData.maxTemperature[1]);
+		DisplayPageValue(0x23,0x55,saveCycleData.minPressure[1]);
+
+		DisplayPageValue(0x23,0x60,saveCycleData.maxTemperature[2]);
+		DisplayPageValue(0x23,0x65,saveCycleData.minPressure[2]);
+
+		DisplayPageValue(0x23,0x70,saveCycleData.maxTemperature[3]);
+		DisplayPageValue(0x23,0x75,saveCycleData.minPressure[3]);
+
+		DisplayPageValue(0x23,0x80,saveCycleData.maxTemperature[4]);
+		DisplayPageValue(0x23,0x85,saveCycleData.minPressure[4]);
+
+		DisplayPageValue(0x23,0x90,saveCycleData.maxTemperature[5]);
+		DisplayPageValue(0x23,0x95,saveCycleData.minPressure[5]);
+
+		DisplayPageValue(0x23,0xA0,saveCycleData.maxTemperature[6]);
+		DisplayPageValue(0x23,0xA5,saveCycleData.minPressure[6]);
+
 	}
 
 
-	DisplayPageValue(0x23,0x50,load_data.tempmax[1]*10);
-	DisplayPageValue(0x23,0x55,load_data.pressuremin[1]*10);
-
-	DisplayPageValue(0x23,0x60,load_data.tempmax[2]*10);
-	DisplayPageValue(0x23,0x65,load_data.pressuremin[2]*10);
-
-	DisplayPageValue(0x23,0x70,load_data.tempmax[3]*10);
-	DisplayPageValue(0x23,0x75,load_data.pressuremin[3]*10);
-
-	DisplayPageValue(0x23,0x80,load_data.tempmax[4]*10);
-	DisplayPageValue(0x23,0x85,load_data.pressuremin[4]*10);
-
-	DisplayPageValue(0x23,0x90,load_data.tempmax[5]*10);
-	DisplayPageValue(0x23,0x95,load_data.pressuremin[5]*10);
-
-	DisplayPageValue(0x23,0xA0,load_data.tempmax[6]*10);
-	DisplayPageValue(0x23,0xA5,load_data.pressuremin[6]*10);
 
 	char msg1[18]={};
+
 	if(temptotalcycle[1]==0){
 		DisplayPage10Char(0x21,0x60,"");
 	}
@@ -3412,7 +3428,7 @@ void DisplaySterilantData(){
 }
 
 void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsigned char *week, unsigned char *hour, unsigned char *minute, unsigned char *second){
-    //__disable_irq();
+    __disable_irq();
     huart1.RxState= HAL_UART_STATE_READY;
     memset(LCD_rx_data, 0, 30);
     HAL_UART_Transmit(LCD_USART, (uint8_t*)rtc_date_get, 6, 10);
@@ -3430,7 +3446,7 @@ void ReadRTC(unsigned char *year, unsigned char *month, unsigned char *day, unsi
     *second = LCD_rx_data[8];
 
     UART_Receive_Flag = 0;
-    //__enable_irq();
+    __enable_irq();
     HAL_UART_Receive_IT(LCD_USART, (uint8_t*)LCD_rx_data, 9);
 }
 

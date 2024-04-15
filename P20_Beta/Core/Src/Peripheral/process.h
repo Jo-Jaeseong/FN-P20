@@ -25,6 +25,9 @@ struct data_format {
 extern struct data_format p_data;	//프린트 데이터
 extern struct data_format load_data;	//로드 데이터
 
+extern float PressureData[300];
+extern float TemperatureData[300];
+
 extern int HeaterControlMode;
 
 extern unsigned int TotalTime;

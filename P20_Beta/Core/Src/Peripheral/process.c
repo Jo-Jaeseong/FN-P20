@@ -208,7 +208,6 @@ void HalfSecondProcess(void){
 	if(Running_Flag){
 		ReadLCD();
 	}
-	HAL_GPIO_TogglePin(LED_GR_GPIO_Port, LED_GR_Pin);
 }
 
 
@@ -378,6 +377,8 @@ void Start(){
 	DisplayPageValue(0x21,0x20,dailyCount);
 	DisplayPageValue(0x21,0x10,totalCount);
 
+	DisplayInitTempGraph();
+	DisplayInitVacuumGraph();
 
 	InitData();
 	DisplayNormalValues();
@@ -609,7 +610,6 @@ void NormalMode(){
 
 		if(StopFlag==0){			//정상 종료
 			DisplayPage8Char(0x12,0x01,"COMPLETE");
-			p_data.status=11;
 		}
 		else{
 			p_data.status=errorcode;
@@ -628,7 +628,7 @@ void NormalMode(){
 		if(autoprintFlag==1){
 			CyclePrint();
 		}
-		SaveCycleData();	//여기 확인
+		SaveCycle();	//여기 확인
 		//Write_Setting_Data_Flash();
 		HAL_Delay(100);
 		//Write_Data_Flash();
@@ -735,6 +735,13 @@ void FactoryTestMode(){
 
 		HeaterControlMode=1;
 
+		if(StopFlag==0){			//정상 종료
+			p_data.status=11;
+		}
+		else{
+			p_data.status=errorcode;
+		}
+
 		CarbonFilter_Count();
 		HEPAFilter_Count();
 		PlasmaAssy_Count();
@@ -744,7 +751,11 @@ void FactoryTestMode(){
 		if(autoprintFlag==1){
 			CyclePrint();
 		}
-		SaveCycleData();	//여기 확인
+		SaveCycle();	//여기 확인
+
+		Write_Flash();
+
+
 		ReadStepTime();
 		ReadProcessTime();
 
