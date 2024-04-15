@@ -1,9 +1,0 @@
-../Core/Src/Peripheral/print.c:36:6:initprint	8	static
-../Core/Src/Peripheral/print.c:42:6:print_pagemode	8	static
-../Core/Src/Peripheral/print.c:48:6:print_standardmode	8	static
-../Core/Src/Peripheral/print.c:53:6:print_printnfeed	8	static
-../Core/Src/Peripheral/print.c:58:6:printline	16	static
-../Core/Src/Peripheral/print.c:67:6:printmsg	24	static
-../Core/Src/Peripheral/print.c:77:6:printmsg100	24	static
-../Core/Src/Peripheral/print.c:87:6:doprint	8	static
-../Core/Src/Peripheral/print.c:92:6:printmain	8	static

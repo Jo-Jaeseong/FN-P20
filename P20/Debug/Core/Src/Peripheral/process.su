@@ -1,7 +1,0 @@
-../Core/Src/Peripheral/process.c:26:6:loop	8	static
-../Core/Src/Peripheral/process.c:48:6:DeliSecondProcess	8	static
-../Core/Src/Peripheral/process.c:58:6:HalfSecondProcess	8	static
-../Core/Src/Peripheral/process.c:70:6:OneSecondProcess	8	static
-../Core/Src/Peripheral/process.c:80:6:TenSecondProcess	4	static
-../Core/Src/Peripheral/process.c:84:6:Init_Device	4	static
-../Core/Src/Peripheral/process.c:88:6:Inithardware	4	static

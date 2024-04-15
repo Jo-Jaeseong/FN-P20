@@ -1,8 +1,0 @@
-../Core/Src/Peripheral/login_system.c:51:5:createUser	16	static
-../Core/Src/Peripheral/login_system.c:86:5:loginUser	16	static
-../Core/Src/Peripheral/login_system.c:106:5:changePWloginUser	8	static
-../Core/Src/Peripheral/login_system.c:119:5:DeletConfirmloginUser	16	static
-../Core/Src/Peripheral/login_system.c:139:5:changePWUser	16	static
-../Core/Src/Peripheral/login_system.c:156:6:ReadInputCreateIDPWFromLCD	32	static,ignoring_inline_asm
-../Core/Src/Peripheral/login_system.c:224:6:ReadInputLoginIDPWFromLCD	24	static,ignoring_inline_asm
-../Core/Src/Peripheral/login_system.c:274:6:ReadInputManagmentIDPWFromLCD	24	static,ignoring_inline_asm

@@ -1,4 +1,0 @@
-../Core/Src/Sensor/sensor.c:31:5:Limit1	8	static
-../Core/Src/Sensor/sensor.c:40:5:Limit2	8	static
-../Core/Src/Sensor/sensor.c:49:5:Limit3	8	static
-../Core/Src/Sensor/sensor.c:58:5:Limit4	8	static

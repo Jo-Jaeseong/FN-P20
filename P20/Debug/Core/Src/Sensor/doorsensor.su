@@ -1,4 +1,0 @@
-../Core/Src/Sensor/doorsensor.c:30:5:DoorHandleCheck	16	static
-../Core/Src/Sensor/doorsensor.c:42:5:DoorLatchCheck	8	static
-../Core/Src/Sensor/doorsensor.c:47:5:BottleCheck	16	static
-../Core/Src/Sensor/doorsensor.c:60:5:DoorOpenProcess	8	static

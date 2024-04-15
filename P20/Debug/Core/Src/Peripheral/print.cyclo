@@ -1,9 +1,0 @@
-../Core/Src/Peripheral/print.c:36:6:initprint	1
-../Core/Src/Peripheral/print.c:42:6:print_pagemode	1
-../Core/Src/Peripheral/print.c:48:6:print_standardmode	1
-../Core/Src/Peripheral/print.c:53:6:print_printnfeed	1
-../Core/Src/Peripheral/print.c:58:6:printline	2
-../Core/Src/Peripheral/print.c:67:6:printmsg	2
-../Core/Src/Peripheral/print.c:77:6:printmsg100	2
-../Core/Src/Peripheral/print.c:87:6:doprint	1
-../Core/Src/Peripheral/print.c:92:6:printmain	1

@@ -1,4 +1,0 @@
-../Core/Src/Sensor/temperature.c:42:9:max6675ReadReg	8
-../Core/Src/Sensor/temperature.c:94:7:max6675Temp	1
-../Core/Src/Sensor/temperature.c:98:6:Check_Temp	2
-../Core/Src/Sensor/temperature.c:119:6:TempSetting	1

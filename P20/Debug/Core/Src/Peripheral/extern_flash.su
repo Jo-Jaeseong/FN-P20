@@ -1,5 +1,0 @@
-../Core/Src/Peripheral/extern_flash.c:41:6:W25Q128_Init	8	static
-../Core/Src/Peripheral/extern_flash.c:45:6:W25Q128_ChipSelect	16	static
-../Core/Src/Peripheral/extern_flash.c:53:6:W25Q128_WriteEnable	16	static
-../Core/Src/Peripheral/extern_flash.c:60:6:W25Q128_WritePage	32	static
-../Core/Src/Peripheral/extern_flash.c:86:6:W25Q128_ReadData	32	static

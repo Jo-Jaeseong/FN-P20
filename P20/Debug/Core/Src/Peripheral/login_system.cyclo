@@ -1,8 +1,0 @@
-../Core/Src/Peripheral/login_system.c:51:5:createUser	10
-../Core/Src/Peripheral/login_system.c:86:5:loginUser	8
-../Core/Src/Peripheral/login_system.c:106:5:changePWloginUser	2
-../Core/Src/Peripheral/login_system.c:119:5:DeletConfirmloginUser	3
-../Core/Src/Peripheral/login_system.c:139:5:changePWUser	3
-../Core/Src/Peripheral/login_system.c:156:6:ReadInputCreateIDPWFromLCD	13
-../Core/Src/Peripheral/login_system.c:224:6:ReadInputLoginIDPWFromLCD	9
-../Core/Src/Peripheral/login_system.c:274:6:ReadInputManagmentIDPWFromLCD	9
